@@ -346,7 +346,7 @@ class _RegisterPageState extends State<RegisterPage> {
               children: [
                 const CustomTextField(
                   label: 'Nome do Dependente',
-                  hintText: 'Ex: Lucas Soares',
+                  hintText: 'Ex: Lucas Araujo',
                 ),
                 const SizedBox(height: 12),
                 Row(
