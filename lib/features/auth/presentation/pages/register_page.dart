@@ -592,7 +592,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 16),
 
           const CustomTextField(
-            label: 'E-mail corporativo',
+            label: 'E-mail',
             hintText: 'Ex: antonio@email.com',
             keyboardType: TextInputType.emailAddress,
           ),
