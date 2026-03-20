@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
+import 'package:flutter_project/features/auth/presentation/pages/login_page.dart';
 
 class GeneralSettingsPage extends StatefulWidget {
   const GeneralSettingsPage({super.key});
@@ -190,8 +191,12 @@ class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
           ),
           TextButton(
             onPressed: () {
-              // Logic to logout
-              Navigator.pop(context);
+              // Limpa a pilha de navegação e volta para a tela de login
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
+              );
             },
             child: const Text('Sair', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),

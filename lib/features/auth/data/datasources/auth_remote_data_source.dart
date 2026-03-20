@@ -16,6 +16,20 @@ class AuthRemoteDataSource {
     ),
   );
 
+  Future<Response> login(Map<String, dynamic> credentials) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.loginEndpoint,
+        data: credentials,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Erro ao realizar login');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
   Future<Response> register(Map<String, dynamic> userData) async {
     try {
       final response = await _dio.post(

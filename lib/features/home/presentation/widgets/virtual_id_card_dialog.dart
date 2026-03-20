@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
 
+import 'package:flutter_project/features/auth/domain/entities/user.dart';
+
 class VirtualIdCardDialog extends StatelessWidget {
-  const VirtualIdCardDialog({super.key});
+  final User user;
+  const VirtualIdCardDialog({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -82,9 +85,9 @@ class VirtualIdCardDialog extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'ATIVO',
-                          style: TextStyle(
+                        child: Text(
+                          user.associate ? 'ATIVO' : 'PENDENTE',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -106,18 +109,13 @@ class VirtualIdCardDialog extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/Lucas.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    color: AppColors.greenLight,
-                                    size: 30,
-                                  ),
-                                ),
+                        child: const ClipOval(
+                          child: Center(
+                            child: Icon(
+                              Icons.person,
+                              color: AppColors.greenLight,
+                              size: 30,
+                            ),
                           ),
                         ),
                       ),
@@ -126,9 +124,9 @@ class VirtualIdCardDialog extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'LUCAS ARAUJO',
-                              style: TextStyle(
+                            Text(
+                              user.name.toUpperCase(),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -136,9 +134,9 @@ class VirtualIdCardDialog extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Matrícula: 1234567-89',
-                              style: TextStyle(
+                            Text(
+                              'Status: ${user.status}',
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                               ),

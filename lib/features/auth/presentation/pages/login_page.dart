@@ -3,6 +3,10 @@ import 'package:flutter_project/core/theme/app_colors.dart';
 import 'package:flutter_project/features/auth/presentation/pages/register_page.dart';
 import 'package:flutter_project/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:flutter_project/features/main/presentation/pages/main_page.dart';
+import 'package:flutter_project/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:flutter_project/features/auth/domain/usecases/login_use_case.dart';
+import 'package:flutter_project/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:flutter_project/features/auth/data/datasources/auth_remote_data_source.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +17,61 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = false;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  
+  // Dependency Injection (Simplificada para este exemplo)
+  late final AuthController _authController;
+
+  @override
+  void initState() {
+    super.initState();
+    final remoteDataSource = AuthRemoteDataSource();
+    final repository = AuthRepositoryImpl(remoteDataSource: remoteDataSource);
+    final loginUseCase = LoginUseCase(repository: repository);
+    _authController = AuthController(loginUseCase: loginUseCase);
+    
+    _authController.addListener(_onAuthStateChanged);
+  }
+
+  @override
+  void dispose() {
+    _authController.removeListener(_onAuthStateChanged);
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _onAuthStateChanged() {
+    if (_authController.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_authController.errorMessage!),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _authController.clearError();
+    }
+  }
+
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      final success = await _authController.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (success && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainPage(user: _authController.user!),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +80,11 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               const SizedBox(height: 48),
               // Ascesa Logo
               Center(
@@ -62,6 +123,7 @@ class _LoginPageState extends State<LoginPage> {
 
               // Email Field
               TextFormField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'E-mail',
                   hintStyle: const TextStyle(color: AppColors.textLight),
@@ -85,11 +147,21 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira seu e-mail';
+                  }
+                  if (!value.contains('@')) {
+                    return 'E-mail inválido';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 
               // Password Field
               TextFormField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: 'Senha',
@@ -113,6 +185,12 @@ class _LoginPageState extends State<LoginPage> {
                     borderSide: const BorderSide(color: AppColors.greenPrimary),
                   ),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira sua senha';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 
@@ -161,26 +239,36 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 32),
 
               // Login Button
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MainPage()),
+              ListenableBuilder(
+                listenable: _authController,
+                builder: (context, child) {
+                  return ElevatedButton(
+                    onPressed: _authController.isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.greenDark,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: _authController.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Entrar',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.greenDark, // Very dark green
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Entrar',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
               ),
               const SizedBox(height: 32),
 
@@ -212,6 +300,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

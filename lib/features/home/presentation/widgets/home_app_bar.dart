@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
 
+import 'package:flutter_project/features/auth/domain/entities/user.dart';
+
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const HomeAppBar({super.key});
+  final User user;
+  const HomeAppBar({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -11,18 +14,18 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text(
-            'Olá, Lucas Araujo 👋',
-            style: TextStyle(
+            'Olá, ${user.name} 👋',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.greenDark,
             ),
           ),
           Text(
-            'Associado Ativo',
-            style: TextStyle(
+            user.associate ? 'Associado Ativo' : 'Não Associado',
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.greenPrimary,
               fontWeight: FontWeight.w600,

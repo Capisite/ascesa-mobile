@@ -6,14 +6,17 @@ import 'package:flutter_project/features/home/presentation/widgets/promo_banner.
 import 'package:flutter_project/features/home/presentation/widgets/latest_news_section.dart';
 import 'package:flutter_project/features/home/presentation/widgets/virtual_id_card_dialog.dart';
 
+import 'package:flutter_project/features/auth/domain/entities/user.dart';
+
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final User user;
+  const HomePage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const HomeAppBar(),
+      appBar: HomeAppBar(user: user),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -31,7 +34,7 @@ class HomePage extends StatelessWidget {
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => const VirtualIdCardDialog(),
+            builder: (context) => VirtualIdCardDialog(user: user),
           );
         },
         backgroundColor: AppColors.greenDark,

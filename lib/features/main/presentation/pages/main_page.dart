@@ -5,8 +5,11 @@ import 'package:flutter_project/features/benefits/presentation/pages/convenios_p
 import 'package:flutter_project/features/news/presentation/pages/noticias_page.dart';
 import 'package:flutter_project/features/member_area/presentation/pages/configuracoes_page.dart';
 
+import 'package:flutter_project/features/auth/domain/entities/user.dart';
+
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final User user;
+  const MainPage({super.key, required this.user});
 
   @override
   State<MainPage> createState() => MainPageState();
@@ -15,12 +18,18 @@ class MainPage extends StatefulWidget {
 class MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ConveniosPage(),
-    const NoticiasPage(),
-    const ConfiguracoesPage(),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomePage(user: widget.user),
+      const ConveniosPage(),
+      const NoticiasPage(),
+      const ConfiguracoesPage(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
