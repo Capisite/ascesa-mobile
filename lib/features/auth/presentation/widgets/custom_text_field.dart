@@ -9,6 +9,7 @@ class CustomTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final bool obscureText;
   final List<TextInputFormatter>? inputFormatters;
+  final TextEditingController? controller;
 
   const CustomTextField({
     super.key,
@@ -18,6 +19,7 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.inputFormatters,
+    this.controller,
   });
 
   @override
@@ -35,6 +37,7 @@ class CustomTextField extends StatelessWidget {
         ),
         const SizedBox(height: 4), // Reduced from 8
         TextFormField(
+          controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
           inputFormatters: inputFormatters,
