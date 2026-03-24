@@ -17,6 +17,10 @@ import 'package:flutter_project/features/home/domain/usecases/get_categories_use
 import 'package:flutter_project/features/home/data/repositories/home_repository_impl.dart';
 import 'package:flutter_project/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:flutter_project/features/home/data/datasources/home_local_data_source.dart';
+import 'package:flutter_project/features/member_area/data/datasources/user_remote_data_source.dart';
+import 'package:flutter_project/features/member_area/domain/usecases/update_user_use_case.dart';
+import 'package:flutter_project/features/member_area/presentation/controllers/user_profile_controller.dart';
+import 'package:flutter_project/features/auth/data/datasources/auth_local_data_source.dart';
 
 class MainPage extends StatefulWidget {
   final User user;
@@ -31,12 +35,15 @@ class MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
   late final BenefitsController _benefitsController;
   late final HomeController _homeController;
+  late final UserProfileController _userProfileController;
 
+  late User _currentUser;
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _currentUser = widget.user;
     
     // Dependency Injection for Home
     final homeRemoteDataSource = HomeRemoteDataSource(token: widget.token);
@@ -60,9 +67,21 @@ class MainPageState extends State<MainPage> {
     _benefitsController = BenefitsController(getPartnersUseCase: getPartnersUseCase);
     _benefitsController.fetchAllPartners();
 
+    // Dependency Injection for User Profile
+    final userRemoteDataSource = UserRemoteDataSource(token: widget.token);
+    final authLocalDataSource = AuthLocalDataSource();
+    final updateUserUseCase = UpdateUserUseCase(dataSource: userRemoteDataSource);
+    _userProfileController = UserProfileController(
+      updateUserUseCase: updateUserUseCase,
+      authLocalDataSource: authLocalDataSource,
+      user: _currentUser,
+    );
+
+    _userProfileController.addListener(_onUserProfileUpdated);
+
     _pages = [
       HomePage(
-        user: widget.user,
+        user: _currentUser,
         controller: _homeController,
         onCategorySelected: (categoryId) {
           _benefitsController.setFilter(categoryId);
@@ -74,8 +93,31 @@ class MainPageState extends State<MainPage> {
         homeController: _homeController,
       ),
       const NoticiasPage(),
-      const ConfiguracoesPage(),
+      ConfiguracoesPage(userProfileController: _userProfileController),
     ];
+  }
+
+  void _onUserProfileUpdated() {
+    if (_userProfileController.user != _currentUser) {
+      setState(() {
+        _currentUser = _userProfileController.user;
+        // Rebuild pages with new user
+        _pages[0] = HomePage(
+          user: _currentUser,
+          controller: _homeController,
+          onCategorySelected: (categoryId) {
+            _benefitsController.setFilter(categoryId);
+            _onItemTapped(1);
+          },
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _userProfileController.removeListener(_onUserProfileUpdated);
+    super.dispose();
   }
 
   void _onItemTapped(int index) {

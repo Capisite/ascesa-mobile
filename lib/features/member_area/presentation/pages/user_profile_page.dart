@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
+import 'package:flutter_project/features/member_area/presentation/controllers/user_profile_controller.dart';
 
 class UserProfilePage extends StatefulWidget {
-  const UserProfilePage({super.key});
+  final UserProfileController controller;
+  
+  const UserProfilePage({super.key, required this.controller});
 
   @override
   State<UserProfilePage> createState() => _UserProfilePageState();
@@ -11,26 +14,21 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Mock data controllers
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _fatherNameController;
   late TextEditingController _motherNameController;
 
-  // Locked data (no controllers needed for display-only fields unless we want them for consistency)
-  final String _cpf = '123.456.789-00';
-  final String _rg = '12.345.678-9';
-  final String _address = 'Rua das Flores, 123, São Paulo - SP';
-
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: 'Maurício Silva');
-    _emailController = TextEditingController(text: 'mauricio@example.com');
-    _phoneController = TextEditingController(text: '(11) 98765-4321');
-    _fatherNameController = TextEditingController(text: 'João Silva');
-    _motherNameController = TextEditingController(text: 'Maria Silva');
+    final user = widget.controller.user;
+    _nameController = TextEditingController(text: user.name);
+    _emailController = TextEditingController(text: user.email);
+    _phoneController = TextEditingController(text: user.phone ?? '');
+    _fatherNameController = TextEditingController(text: user.fatherName ?? '');
+    _motherNameController = TextEditingController(text: user.motherName ?? '');
   }
 
   @override
@@ -43,143 +41,198 @@ class _UserProfilePageState extends State<UserProfilePage> {
     super.dispose();
   }
 
+  void _handleSave() async {
+    if (_formKey.currentState!.validate()) {
+      await widget.controller.updateProfile(
+        name: _nameController.text,
+        email: _emailController.text,
+        phone: _phoneController.text,
+        fatherName: _fatherNameController.text,
+        motherName: _motherNameController.text,
+      );
+
+      if (mounted) {
+        if (widget.controller.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.controller.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (widget.controller.successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.controller.successMessage!),
+              backgroundColor: AppColors.greenPrimary,
+            ),
+          );
+          // Optional: Navigator.pop(context);
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.greenDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Perfil do Usuário',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.greenDark,
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) {
+        final isLoading = widget.controller.isLoading;
+        
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.greenDark),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              'Perfil do Usuário',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.greenDark,
+              ),
+            ),
           ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          body: Stack(
             children: [
-              // Photo Section
-              Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.greenPrimary, width: 2),
-                      ),
-                      child: const CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppColors.bgLight,
-                        child: Icon(Icons.person, size: 50, color: AppColors.textLight),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.greenPrimary,
-                          shape: BoxShape.circle,
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Photo Section
+                      Center(
+                        child: Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.greenPrimary, width: 2),
+                              ),
+                              child: const CircleAvatar(
+                                radius: 50,
+                                backgroundColor: AppColors.bgLight,
+                                child: Icon(Icons.person, size: 50, color: AppColors.textLight),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.greenPrimary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.edit, color: Colors.white, size: 20),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 32),
+
+                      _buildSectionTitle('Informações Pessoais'),
+                      _buildTextField(
+                        label: 'Nome',
+                        controller: _nameController,
+                        icon: Icons.person_outline,
+                        validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                      ),
+                      _buildTextField(
+                        label: 'E-mail',
+                        controller: _emailController,
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                      ),
+                      _buildTextField(
+                        label: 'Telefone',
+                        controller: _phoneController,
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                      ),
+
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Filiação'),
+                      _buildTextField(
+                        label: 'Nome do Pai',
+                        controller: _fatherNameController,
+                        icon: Icons.man_outlined,
+                      ),
+                      _buildTextField(
+                        label: 'Nome da Mãe',
+                        controller: _motherNameController,
+                        icon: Icons.woman_outlined,
+                      ),
+
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Documentos e Endereço (Bloqueados)'),
+                      _buildLockedField(
+                        label: 'CPF',
+                        value: '***.***.***-**',
+                        icon: Icons.badge_outlined,
+                      ),
+                      _buildLockedField(
+                        label: 'RG',
+                        value: '**.***.***-*',
+                        icon: Icons.card_membership_outlined,
+                      ),
+
+                      const SizedBox(height: 48),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _handleSave,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.greenPrimary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ).copyWith(
+                            backgroundColor: WidgetStateProperty.resolveWith((states) {
+                              if (states.contains(WidgetState.disabled)) return AppColors.textLight;
+                              return AppColors.greenPrimary;
+                            }),
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text(
+                                  'Salvar Alterações',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
-
-              _buildSectionTitle('Informações Pessoais'),
-              _buildTextField(
-                label: 'Nome',
-                controller: _nameController,
-                icon: Icons.person_outline,
-              ),
-              _buildTextField(
-                label: 'E-mail',
-                controller: _emailController,
-                icon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              _buildTextField(
-                label: 'Telefone',
-                controller: _phoneController,
-                icon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-              ),
-
-              const SizedBox(height: 24),
-              _buildSectionTitle('Filiação'),
-              _buildTextField(
-                label: 'Nome do Pai',
-                controller: _fatherNameController,
-                icon: Icons.man_outlined,
-              ),
-              _buildTextField(
-                label: 'Nome da Mãe',
-                controller: _motherNameController,
-                icon: Icons.woman_outlined,
-              ),
-
-              const SizedBox(height: 24),
-              _buildSectionTitle('Documentos e Endereço (Bloqueados)'),
-              _buildLockedField(
-                label: 'CPF',
-                value: _cpf,
-                icon: Icons.badge_outlined,
-              ),
-              _buildLockedField(
-                label: 'RG',
-                value: _rg,
-                icon: Icons.card_membership_outlined,
-              ),
-              _buildLockedField(
-                label: 'Endereço',
-                value: _address,
-                icon: Icons.location_on_outlined,
-              ),
-
-              const SizedBox(height: 48),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Logic to save profile
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.greenPrimary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Salvar Alterações',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              if (isLoading)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: AppColors.greenPrimary),
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -205,12 +258,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
     required TextEditingController controller,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        validator: validator,
         style: const TextStyle(fontSize: 15, color: AppColors.greenDark),
         decoration: InputDecoration(
           labelText: label,

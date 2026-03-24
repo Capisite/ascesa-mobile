@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
 import 'package:flutter_project/features/member_area/presentation/pages/user_profile_page.dart';
+import 'package:flutter_project/features/member_area/presentation/controllers/user_profile_controller.dart';
 import 'package:flutter_project/features/member_area/presentation/pages/dependents_page.dart';
 import 'package:flutter_project/features/member_area/presentation/pages/general_settings_page.dart';
 
 class ConfiguracoesPage extends StatelessWidget {
-  const ConfiguracoesPage({super.key});
+  final UserProfileController userProfileController;
+  
+  const ConfiguracoesPage({super.key, required this.userProfileController});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +48,9 @@ class ConfiguracoesPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const UserProfilePage()),
+                  MaterialPageRoute(
+                    builder: (context) => UserProfilePage(controller: userProfileController),
+                  ),
                 );
               },
             ),
