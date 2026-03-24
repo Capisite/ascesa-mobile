@@ -7,26 +7,43 @@ import 'package:flutter_project/features/home/presentation/widgets/latest_news_s
 import 'package:flutter_project/features/home/presentation/widgets/virtual_id_card_dialog.dart';
 
 import 'package:flutter_project/features/auth/domain/entities/user.dart';
+import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final User user;
-  const HomePage({super.key, required this.user});
+  final HomeController controller;
+  final Function(String)? onCategorySelected;
+  
+  const HomePage({
+    super.key,
+    required this.user,
+    required this.controller,
+    this.onCategorySelected,
+  });
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: HomeAppBar(user: user),
+      appBar: HomeAppBar(user: widget.user),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            QuickAccessSection(),
-            SizedBox(height: 24),
-            PromoBanner(),
-            SizedBox(height: 24),
-            LatestNewsSection(),
+          children: [
+            QuickAccessSection(
+              controller: widget.controller,
+              onCategorySelected: widget.onCategorySelected,
+            ),
+            const SizedBox(height: 24),
+            const PromoBanner(),
+            const SizedBox(height: 24),
+            const LatestNewsSection(),
           ],
         ),
       ),
@@ -34,7 +51,7 @@ class HomePage extends StatelessWidget {
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => VirtualIdCardDialog(user: user),
+            builder: (context) => VirtualIdCardDialog(user: widget.user),
           );
         },
         backgroundColor: AppColors.greenDark,

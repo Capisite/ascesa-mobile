@@ -4,52 +4,22 @@ import 'package:flutter_project/features/benefits/presentation/widgets/convenios
 import 'package:flutter_project/features/benefits/presentation/widgets/convenios_search_bar.dart';
 import 'package:flutter_project/features/benefits/presentation/widgets/convenios_filter_list.dart';
 import 'package:flutter_project/features/benefits/presentation/widgets/convenio_card.dart';
+import 'package:flutter_project/features/benefits/presentation/controllers/benefits_controller.dart';
+
+import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
 
 class ConveniosPage extends StatelessWidget {
-  const ConveniosPage({super.key});
+  final BenefitsController benefitsController;
+  final HomeController homeController;
+  
+  const ConveniosPage({
+    super.key,
+    required this.benefitsController,
+    required this.homeController,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data matching the web mock
-    final conveniosList = [
-      {
-        'brand': 'Cinemark',
-        'category': 'Cultura & Lazer',
-        'discount': 'Até 50% off',
-        'color': const Color(0xFFC00000), // Richer Red
-      },
-      {
-        'brand': 'Netshoes',
-        'category': 'Lojas Esportivas',
-        'discount': '15% off no app',
-        'color': const Color(0xFF5A2D82), // Beautiful Indigo
-      },
-      {
-        'brand': 'Droga Raia',
-        'category': 'Saúde & Farmácia',
-        'discount': 'Até 30% em genéricos',
-        'color': const Color(0xFF00754A), // Deep vibrant Green
-      },
-      {
-        'brand': 'Smart Fit',
-        'category': 'Academias',
-        'discount': 'Zero adesão',
-        'color': const Color(0xFFF0A500), // Vibrant Amber
-      },
-      {
-        'brand': 'Centauro',
-        'category': 'Lojas',
-        'discount': '20% em tênis',
-        'color': const Color(0xFFE3000F), // Bright Red
-      },
-      {
-        'brand': 'Cobasi',
-        'category': 'Pet Shop',
-        'discount': '10% no banho',
-        'color': const Color(0xFF0044CC), // Rich Blue
-      },
-    ];
-
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       body: CustomScrollView(
@@ -59,59 +29,137 @@ class ConveniosPage extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
+              child: ListenableBuilder(
+                listenable: benefitsController,
+                builder: (context, child) {
+                  final partners = benefitsController.partners;
+                  final isLoading = benefitsController.isLoading;
+                  final errorMessage = benefitsController.errorMessage;
 
-                  const ConveniosSearchBar(),
-                  const SizedBox(height: 24),
+                  return Column(
+                    children: [
+                      const SizedBox(height: 16),
 
-                  const ConveniosFilterList(),
-                  const SizedBox(height: 32),
+                      const ConveniosSearchBar(),
+                      const SizedBox(height: 24),
 
-                  // Section Title
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Destaques para você',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.greenDark,
+                      ListenableBuilder(
+                        listenable: homeController,
+                        builder: (context, _) {
+                          return ConveniosFilterList(
+                            categories: homeController.categories,
+                            selectedCategoryId: benefitsController.selectedCategoryId,
+                            onCategorySelected: (catId) {
+                               benefitsController.setFilter(catId);
+                            },
+                            onClearFilter: () {
+                               benefitsController.setFilter(null);
+                            },
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                      const SizedBox(height: 32),
 
-                  // Grid View
-                  GridView.builder(
-                    padding: const EdgeInsets.only(bottom: 32),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.72,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                      // Section Title
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          benefitsController.selectedCategoryId != null 
+                              ? 'Parceiros Encontrados'
+                              : 'Destaques para você',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.greenDark,
+                          ),
                         ),
-                    itemCount: conveniosList.length,
-                    itemBuilder: (context, index) {
-                      final item = conveniosList[index];
-                      return ConvenioCard(
-                        brandName: item['brand'] as String,
-                        category: item['category'] as String,
-                        discount: item['discount'] as String,
-                        brandColor: item['color'] as Color,
-                      );
-                    },
-                  ),
-                ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      if (isLoading)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: CircularProgressIndicator(color: AppColors.greenPrimary),
+                          ),
+                        )
+                      else if (errorMessage != null)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                                const SizedBox(height: 8),
+                                Text(
+                                  errorMessage,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    benefitsController.fetchAllPartners();
+                                  },
+                                  child: const Text('Tentar novamente'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else if (partners.isEmpty)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: Text('Nenhum parceiro encontrado nesta categoria'),
+                          ),
+                        )
+                      else
+                        // Grid View
+                        GridView.builder(
+                          padding: const EdgeInsets.only(bottom: 32),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.72,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                          itemCount: partners.length,
+                          itemBuilder: (context, index) {
+                            final partner = partners[index];
+                            final brandColor = _getBrandColor(partner.name);
+                            
+                            return ConvenioCard(
+                              brandName: partner.name,
+                              category: partner.categoryId,
+                              discount: partner.offer.title,
+                              brandColor: brandColor,
+                            );
+                          },
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
         ],
       ),
     );
+  }
+  
+  Color _getBrandColor(String name) {
+    // Simple helper to provide a consistent color per brand name if not available
+    final colors = [
+      const Color(0xFFC00000),
+      const Color(0xFF5A2D82),
+      const Color(0xFF00754A),
+      const Color(0xFFF0A500),
+      const Color(0xFFE3000F),
+      const Color(0xFF0044CC),
+    ];
+    return colors[name.hashCode % colors.length];
   }
 }

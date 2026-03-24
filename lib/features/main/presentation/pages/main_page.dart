@@ -6,10 +6,22 @@ import 'package:flutter_project/features/news/presentation/pages/noticias_page.d
 import 'package:flutter_project/features/member_area/presentation/pages/configuracoes_page.dart';
 
 import 'package:flutter_project/features/auth/domain/entities/user.dart';
+import 'package:flutter_project/features/benefits/presentation/controllers/benefits_controller.dart';
+import 'package:flutter_project/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
+import 'package:flutter_project/features/benefits/data/repositories/benefits_repository_impl.dart';
+import 'package:flutter_project/features/benefits/data/datasources/benefits_remote_data_source.dart';
+import 'package:flutter_project/features/benefits/data/datasources/benefits_local_data_source.dart';
+
+import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
+import 'package:flutter_project/features/home/domain/usecases/get_categories_use_case.dart';
+import 'package:flutter_project/features/home/data/repositories/home_repository_impl.dart';
+import 'package:flutter_project/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:flutter_project/features/home/data/datasources/home_local_data_source.dart';
 
 class MainPage extends StatefulWidget {
   final User user;
-  const MainPage({super.key, required this.user});
+  final String token;
+  const MainPage({super.key, required this.user, required this.token});
 
   @override
   State<MainPage> createState() => MainPageState();
@@ -17,15 +29,50 @@ class MainPage extends StatefulWidget {
 
 class MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
+  late final BenefitsController _benefitsController;
+  late final HomeController _homeController;
 
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    
+    // Dependency Injection for Home
+    final homeRemoteDataSource = HomeRemoteDataSource(token: widget.token);
+    final homeLocalDataSource = HomeLocalDataSource();
+    final homeRepository = HomeRepositoryImpl(
+      remoteDataSource: homeRemoteDataSource,
+      localDataSource: homeLocalDataSource,
+    );
+    final getCategoriesUseCase = GetCategoriesUseCase(repository: homeRepository);
+    _homeController = HomeController(getCategoriesUseCase: getCategoriesUseCase);
+    _homeController.fetchCategories();
+
+    // Dependency Injection for Benefits
+    final benefitsRemoteDataSource = BenefitsRemoteDataSource(token: widget.token);
+    final benefitsLocalDataSource = BenefitsLocalDataSource();
+    final benefitsRepository = BenefitsRepositoryImpl(
+      remoteDataSource: benefitsRemoteDataSource,
+      localDataSource: benefitsLocalDataSource,
+    );
+    final getPartnersUseCase = GetPartnersByCategoryUseCase(repository: benefitsRepository);
+    _benefitsController = BenefitsController(getPartnersUseCase: getPartnersUseCase);
+    _benefitsController.fetchAllPartners();
+
     _pages = [
-      HomePage(user: widget.user),
-      const ConveniosPage(),
+      HomePage(
+        user: widget.user,
+        controller: _homeController,
+        onCategorySelected: (categoryId) {
+          _benefitsController.setFilter(categoryId);
+          _onItemTapped(1); // Switch to Convenios tab
+        },
+      ),
+      ConveniosPage(
+        benefitsController: _benefitsController,
+        homeController: _homeController,
+      ),
       const NoticiasPage(),
       const ConfiguracoesPage(),
     ];

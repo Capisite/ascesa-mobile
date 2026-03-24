@@ -4,4 +4,6 @@ class ApiConstants {
   static const String baseUrl = 'http://10.0.2.2:5000';
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
+  static const String categoriesEndpoint = '/allya/categories';
+  static const String partnersEndpoint = '/allya/partners';
 }

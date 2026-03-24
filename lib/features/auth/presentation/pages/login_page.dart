@@ -66,7 +66,10 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => MainPage(user: _authController.user!),
+            builder: (context) => MainPage(
+              user: _authController.user!,
+              token: _authController.accessToken!,
+            ),
           ),
         );
       }
