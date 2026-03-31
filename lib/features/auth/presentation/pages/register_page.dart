@@ -72,6 +72,10 @@ class _RegisterPageState extends State<RegisterPage> {
     mask: '##/##/####',
     filter: {"#": RegExp(r'[0-9]')},
   );
+  final _rgFormatter = MaskTextInputFormatter(
+    mask: '#.###.###',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
   final _phoneFormatter = MaskTextInputFormatter(
     mask: '(##) #####-####',
     filter: {"#": RegExp(r'[0-9]')},
@@ -156,6 +160,8 @@ class _RegisterPageState extends State<RegisterPage> {
         return 'FEMALE';
       case 'Outro':
         return 'OTHER';
+      case 'Não informado':
+        return 'NOT_INFORMED';
       default:
         return 'NOT_INFORMED';
     }
@@ -187,6 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
         'rg': _rgController.text,
         'birthDate': _formatDateToBackend(_birthDateController.text),
         'registrationNumber': _registrationNumberController.text,
+        'phone': _mobilePhoneController.text.replaceAll(RegExp(r'\D'), ''),
         'gender': _mapGender(_selectedGender),
         'maritalStatus': _selectedMaritalStatus,
         'companyName': _selectedCompany,
@@ -334,7 +341,9 @@ class _RegisterPageState extends State<RegisterPage> {
               Expanded(
                 child: CustomTextField(
                   label: 'RG',
-                  hintText: 'Digite o RG',
+                  hintText: '0.000.000',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [_rgFormatter],
                   controller: _rgController,
                 ),
               ),
@@ -376,7 +385,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: CustomDropdown(
                   label: 'Sexo',
                   hintText: 'Selecione', // Reduced hint text
-                  items: const ['Masculino', 'Feminino', 'Outro'],
+                  items: const ['Masculino', 'Feminino', 'Outro', 'Não informado'],
                   value: _selectedGender,
                   onChanged: (val) => setState(() => _selectedGender = val),
                 ),
@@ -387,10 +396,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   label: 'Estado Civil',
                   hintText: 'Selecione', // Reduced hint text
                   items: const [
-                    'Solteiro(a)',
-                    'Casado(a)',
-                    'Divorciado(a)',
-                    'Viúvo(a)',
+                    'Solteiro',
+                    'Casado',
+                    'Divorciado',
+                    'Viúvo',
                   ],
                   value: _selectedMaritalStatus,
                   onChanged: (val) => setState(() => _selectedMaritalStatus = val),
@@ -403,7 +412,7 @@ class _RegisterPageState extends State<RegisterPage> {
           CustomDropdown(
             label: 'Empresa na qual Trabalha',
             hintText: 'Selecione um campo',
-            items: const ['Empresa 1', 'Empresa 2'],
+            items: const ['Sicoob Banco', 'Sicoob Confederação', 'Outras'],
             value: _selectedCompany,
             onChanged: (val) => setState(() => _selectedCompany = val),
           ),

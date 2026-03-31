@@ -48,27 +48,25 @@ class NewsCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                imageUrl,
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: AppColors.bgLight,
-                      borderRadius: BorderRadius.circular(12),
+              child: imageUrl.startsWith('http')
+                  ? Image.network(
+                      imageUrl,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildPlaceholder();
+                      },
+                    )
+                  : Image.asset(
+                      imageUrl,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildPlaceholder();
+                      },
                     ),
-                    child: const Icon(
-                      Icons.article_outlined,
-                      color: AppColors.greenPrimary,
-                      size: 24,
-                    ),
-                  );
-                },
-              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -115,6 +113,23 @@ class NewsCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: AppColors.bgLight,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.article_outlined,
+        color: AppColors.greenPrimary,
+        size: 24,
       ),
     );
   }

@@ -1,16 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
 import 'package:flutter_project/features/main/presentation/pages/main_page.dart';
+import 'package:flutter_project/features/news/data/datasources/news_remote_datasource.dart';
+import 'package:flutter_project/features/news/data/repositories/news_repository_impl.dart';
+import 'package:flutter_project/features/news/domain/usecases/get_news.dart';
+import 'package:flutter_project/features/news/presentation/controllers/news_controller.dart';
 import 'package:flutter_project/features/news/presentation/widgets/news_card.dart';
+import 'package:intl/intl.dart';
 
-class LatestNewsSection extends StatelessWidget {
+
+class LatestNewsSection extends StatefulWidget {
   const LatestNewsSection({super.key});
 
   @override
+  State<LatestNewsSection> createState() => _LatestNewsSectionState();
+}
+
+class _LatestNewsSectionState extends State<LatestNewsSection> {
+  late final NewsController _newsController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Since there is no global DI yet, we instantiate it here for now
+    // In a real app we'd use GetIt or Provider
+    final remoteDataSource = NewsRemoteDataSource();
+    final repository = NewsRepositoryImpl(remoteDataSource);
+    final getNewsUseCase = GetNews(repository);
+    _newsController = NewsController(getNewsUseCase: getNewsUseCase);
+    
+    _newsController.fetchNews();
+  }
+
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return ListenableBuilder(
+      listenable: _newsController,
+      builder: (context, _) {
+        if (_newsController.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (_newsController.errorMessage != null) {
+          return Center(child: Text(_newsController.errorMessage!));
+        }
+
+        final newsList = _newsController.news;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -40,24 +81,25 @@ class LatestNewsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        const NewsCard(
-          title: 'Assembleia Geral Ordinária',
-          date: '15 Março, 2024',
-          description:
-              'Convocação para a próxima assembleia geral para discussão de pautas importantes...',
-          imageUrl: 'assets/images/news.png',
-        ),
-        const SizedBox(height: 12),
-        const NewsCard(
-          title: 'Campanha de Vacinação',
-          date: '10 Março, 2024',
-          description:
-              'Iniciada a nova fase da campanha de vacinação parceira para todos os membros...',
-          imageUrl: 'assets/images/news.png',
-        ),
+        if (newsList.isEmpty)
+          const Center(child: Text('Nenhuma notícia encontrada')),
+        ...newsList.take(3).map((news) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: NewsCard(
+                title: news.title,
+                date: DateFormat('dd MMM, yyyy').format(news.createdAt),
+                description: news.description,
+                imageUrl: news.imageUrl,
+              ),
+            )),
         // Add padding at the bottom so the FAB doesn't cover the last content
         const SizedBox(height: 60),
       ],
     );
-  }
+  },
+);
 }
+}
+
+
+

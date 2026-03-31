@@ -64,7 +64,7 @@ class ConvenioCard extends StatelessWidget {
                     child: Icon(
                       Icons.star_rounded,
                       size: 60,
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Colors.white.withValues(alpha: 0.3),
                     ),
                   ),
                   Padding(
