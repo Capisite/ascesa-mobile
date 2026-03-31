@@ -7,6 +7,7 @@ import 'package:flutter_project/features/benefits/presentation/widgets/convenio_
 import 'package:flutter_project/features/benefits/presentation/controllers/benefits_controller.dart';
 
 import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
+import 'package:flutter_project/features/benefits/presentation/pages/benefits_map_page.dart';
 
 class ConveniosPage extends StatelessWidget {
   final BenefitsController benefitsController;
@@ -147,6 +148,28 @@ class ConveniosPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'benefits_map_fab',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BenefitsMapPage(
+                benefitsController: benefitsController,
+              ),
+            ),
+          );
+        },
+        backgroundColor: AppColors.greenPrimary,
+        icon: const Icon(Icons.map_outlined, color: Colors.white),
+        label: const Text(
+          'Ver Mapa',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }

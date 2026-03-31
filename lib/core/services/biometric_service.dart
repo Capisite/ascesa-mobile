@@ -35,7 +35,7 @@ class BiometricService {
           biometricOnly: true,
         ),
       );
-    } on PlatformException catch (e) {
+    } on PlatformException catch (_) {
       return false;
     }
   }
