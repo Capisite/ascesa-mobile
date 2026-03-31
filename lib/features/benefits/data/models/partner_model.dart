@@ -5,8 +5,13 @@ class PartnerModel extends Partner {
     required super.id,
     required super.name,
     required super.slug,
-    required super.about,
-    required super.offer,
+    super.portalPartnerUrl,
+    super.logo,
+    super.cover,
+    super.categoryName,
+    super.title,
+    super.about,
+    super.offer,
     required super.addressess,
     super.link,
     required super.categoryId,
@@ -17,8 +22,13 @@ class PartnerModel extends Partner {
       id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       slug: json['slug'] ?? '',
-      about: json['about'] ?? '',
-      offer: PartnerOfferModel.fromJson(json['offer'] ?? {}),
+      portalPartnerUrl: json['portalPartnerUrl'],
+      logo: json['logo'],
+      cover: json['cover'],
+      categoryName: json['categoryName'],
+      title: json['title'],
+      about: json['about'],
+      offer: json['offer'] != null ? PartnerOfferModel.fromJson(json['offer']) : null,
       addressess: (json['addressess'] as List? ?? [])
           .map((a) => PartnerAddressModel.fromJson(a))
           .toList(),
@@ -29,11 +39,16 @@ class PartnerModel extends Partner {
 
   Map<String, dynamic> toJson() {
     return {
-      '_id': id,
+      'id': id,
       'name': name,
       'slug': slug,
+      'portalPartnerUrl': portalPartnerUrl,
+      'logo': logo,
+      'cover': cover,
+      'categoryName': categoryName,
+      'title': title,
       'about': about,
-      'offer': (offer as PartnerOfferModel).toJson(),
+      'offer': offer != null ? (offer as PartnerOfferModel).toJson() : null,
       'addressess': addressess
           .map((a) => (a as PartnerAddressModel).toJson())
           .toList(),
@@ -44,11 +59,7 @@ class PartnerModel extends Partner {
 }
 
 class PartnerOfferModel extends PartnerOffer {
-  PartnerOfferModel({
-    required super.title,
-    super.term,
-    required super.state,
-  });
+  PartnerOfferModel({required super.title, super.term, required super.state});
 
   factory PartnerOfferModel.fromJson(Map<String, dynamic> json) {
     return PartnerOfferModel(
@@ -59,40 +70,78 @@ class PartnerOfferModel extends PartnerOffer {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'term': term,
-      'state': state,
-    };
+    return {'title': title, 'term': term, 'state': state};
   }
 }
 
 class PartnerAddressModel extends PartnerAddress {
   PartnerAddressModel({
+    super.nameUnit,
+    super.cep,
+    super.neighborhood,
+    super.county,
     super.street,
     super.number,
-    super.neighborhood,
-    super.city,
     super.state,
+    super.complement,
+    super.phone,
+    super.location,
   });
 
   factory PartnerAddressModel.fromJson(Map<String, dynamic> json) {
     return PartnerAddressModel(
+      nameUnit: json['nameUnit'],
+      cep: json['cep'],
+      neighborhood: json['neighborhood'],
+      county: json['county'] ?? json['city'],
       street: json['street'],
       number: json['number'],
-      neighborhood: json['neighborhood'],
-      city: json['city'] ?? json['county'], // Support both
       state: json['state'],
+      complement: json['complement'],
+      phone: json['phone'],
+      location: json['location'] != null
+          ? PartnerLocationModel.fromJson(json['location'])
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'nameUnit': nameUnit,
+      'cep': cep,
+      'neighborhood': neighborhood,
+      'county': county,
       'street': street,
       'number': number,
-      'neighborhood': neighborhood,
-      'city': city,
       'state': state,
+      'complement': complement,
+      'phone': phone,
+      'location': location != null
+          ? (location as PartnerLocationModel).toJson()
+          : null,
+    };
+  }
+}
+
+class PartnerLocationModel extends PartnerLocation {
+  PartnerLocationModel({
+    required super.type,
+    required super.coordinates,
+  });
+
+  factory PartnerLocationModel.fromJson(Map<String, dynamic> json) {
+    return PartnerLocationModel(
+      type: json['type'] ?? 'Point',
+      coordinates: (json['coordinates'] as List? ?? [])
+          .map((e) => (e as num).toDouble())
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'coordinates': coordinates,
     };
   }
 }

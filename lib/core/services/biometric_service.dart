@@ -36,7 +36,6 @@ class BiometricService {
         ),
       );
     } on PlatformException catch (e) {
-      print('Erro na autenticação biométrica: $e');
       return false;
     }
   }

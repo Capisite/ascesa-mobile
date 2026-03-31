@@ -134,8 +134,9 @@ class ConveniosPage extends StatelessWidget {
                             return ConvenioCard(
                               brandName: partner.name,
                               category: partner.categoryId,
-                              discount: partner.offer.title,
+                              discount: partner.title ?? '',
                               brandColor: brandColor,
+                              coverUrl: partner.cover,
                             );
                           },
                         ),

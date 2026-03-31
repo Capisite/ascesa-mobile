@@ -1,11 +1,13 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_project/core/theme/app_colors.dart';
 
-class ConvenioCard extends StatelessWidget {
+class ConvenioCard extends StatefulWidget {
   final String brandName;
   final String category;
   final String discount;
   final Color brandColor;
+  final String? coverUrl;
 
   const ConvenioCard({
     super.key,
@@ -13,7 +15,56 @@ class ConvenioCard extends StatelessWidget {
     required this.category,
     required this.discount,
     required this.brandColor,
+    this.coverUrl,
   });
+
+  @override
+  State<ConvenioCard> createState() => _ConvenioCardState();
+}
+
+class _ConvenioCardState extends State<ConvenioCard> {
+  bool _isLandscape = true;
+  bool _imageLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageInfo();
+  }
+
+  @override
+  void didUpdateWidget(ConvenioCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.coverUrl != oldWidget.coverUrl) {
+      _loadImageInfo();
+    }
+  }
+
+  void _loadImageInfo() {
+    if (widget.coverUrl == null || widget.coverUrl!.isEmpty) {
+      setState(() {
+        _imageLoaded = false;
+      });
+      return;
+    }
+
+    final image = NetworkImage(widget.coverUrl!);
+    final stream = image.resolve(const ImageConfiguration());
+    
+    stream.addListener(
+      ImageStreamListener((ImageInfo info, bool synchronousCall) {
+        if (mounted) {
+          final double aspectRatio = info.image.width / info.image.height;
+          setState(() {
+            // Se for muito wide (landscape), usamos BoxFit.cover
+            // Se for quadrada ou vertical (logo), usamos BoxFit.contain no híbrido
+            _isLandscape = aspectRatio > 1.2 && info.image.width > 300;
+            _imageLoaded = true;
+          });
+        }
+      }),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +75,7 @@ class ConvenioCard extends StatelessWidget {
         border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: brandColor.withValues(
-              alpha: 0.1,
-            ), // subtle glow of the brand
+            color: widget.brandColor.withValues(alpha: 0.1),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -39,58 +88,39 @@ class ConvenioCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Premium Header Area
+          // Premium Header Area (Adaptive)
           Expanded(
-            flex: 4,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [brandColor.withValues(alpha: 0.8), brandColor],
+            flex: 25,
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: widget.coverUrl != null && widget.coverUrl!.isNotEmpty
+                      ? AppColors.bgLight
+                      : null,
+                  gradient:
+                      (widget.coverUrl == null || widget.coverUrl!.isEmpty)
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                widget.brandColor.withValues(alpha: 0.8),
+                                widget.brandColor
+                              ],
+                            )
+                          : null,
                 ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Subtle icon in background
-                  Positioned(
-                    right: -10,
-                    bottom: -10,
-                    child: Icon(
-                      Icons.star_rounded,
-                      size: 60,
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text(
-                      brandName.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                        letterSpacing: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+                child: _buildHeaderContent(),
               ),
             ),
           ),
           // Clean Content Area
           Expanded(
-            flex: 6,
+            flex: 75,
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -101,12 +131,9 @@ class ConvenioCard extends StatelessWidget {
                           horizontal: 8,
                           vertical: 3,
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.bgLight,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+ 
                         child: Text(
-                          category.toUpperCase(),
+                          widget.category.toUpperCase(),
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -118,9 +145,9 @@ class ConvenioCard extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Text(
-                        brandName,
+                        widget.brandName,
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -132,7 +159,7 @@ class ConvenioCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        discount,
+                        widget.discount,
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -169,6 +196,94 @@ class ConvenioCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeaderContent() {
+    if (widget.coverUrl == null || widget.coverUrl!.isEmpty) {
+      return _buildBrandFallback();
+    }
+
+    if (!_imageLoaded) {
+      return const Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.greenPrimary,
+          ),
+        ),
+      );
+    }
+
+    // Se for Landscape e grande, mantemos o preenchimento total
+    if (_isLandscape) {
+      return Image.network(
+        widget.coverUrl!,
+        fit: BoxFit.cover,
+        color: Colors.black.withValues(alpha: 0.15),
+        colorBlendMode: BlendMode.darken,
+      );
+    }
+
+    // Para imagens pequenas ou verticais: Cabeçalho Híbrido (Blur + Contain)
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Fundo desfocado
+        Image.network(
+          widget.coverUrl!,
+          fit: BoxFit.cover,
+        ),
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.1),
+          ),
+        ),
+        // Imagem centralizada sem cortes
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.network(
+            widget.coverUrl!,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrandFallback() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Subtle icon in background
+        Positioned(
+          right: -10,
+          bottom: -10,
+          child: Icon(
+            Icons.star_rounded,
+            size: 60,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Text(
+            widget.brandName.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              letterSpacing: 1.2,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
