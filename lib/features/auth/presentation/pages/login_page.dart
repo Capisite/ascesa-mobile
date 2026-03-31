@@ -8,6 +8,9 @@ import 'package:flutter_project/features/auth/domain/usecases/login_use_case.dar
 import 'package:flutter_project/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_project/features/auth/data/datasources/auth_remote_data_source.dart';
 
+import 'package:flutter_project/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:flutter_project/core/services/biometric_service.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -16,13 +19,15 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool _rememberMe = false;
+  bool _useBiometrics = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   
   // Dependency Injection (Simplificada para este exemplo)
   late final AuthController _authController;
+  final AuthLocalDataSource _localDataSource = AuthLocalDataSource();
+  final BiometricService _biometricService = BiometricService();
 
   @override
   void initState() {
@@ -33,6 +38,26 @@ class _LoginPageState extends State<LoginPage> {
     _authController = AuthController(loginUseCase: loginUseCase);
     
     _authController.addListener(_onAuthStateChanged);
+    _checkBiometricLogin();
+  }
+
+  Future<void> _checkBiometricLogin() async {
+    final enabled = await _localDataSource.isBiometricsEnabled();
+    setState(() {
+      _useBiometrics = enabled;
+    });
+
+    if (enabled) {
+      final credentials = await _localDataSource.getCredentials();
+      if (credentials != null) {
+        final authenticated = await _biometricService.authenticate();
+        if (authenticated) {
+          _emailController.text = credentials['email']!;
+          _passwordController.text = credentials['password']!;
+          _handleLogin(isBiometric: true);
+        }
+      }
+    }
   }
 
   @override
@@ -55,14 +80,22 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      final success = await _authController.login(
-        _emailController.text,
-        _passwordController.text,
-      );
+  Future<void> _handleLogin({bool isBiometric = false}) async {
+    if (isBiometric || _formKey.currentState!.validate()) {
+      final email = _emailController.text;
+      final password = _passwordController.text;
+      
+      final success = await _authController.login(email, password);
 
       if (success && mounted) {
+        if (_useBiometrics) {
+          await _localDataSource.setBiometricsEnabled(true);
+          await _localDataSource.saveCredentials(email, password);
+        } else {
+          await _localDataSource.setBiometricsEnabled(false);
+          await _localDataSource.clearUser(); // Limpa credenciais também
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -204,10 +237,10 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     children: [
                       Checkbox(
-                        value: _rememberMe,
+                        value: _useBiometrics,
                         onChanged: (value) {
                           setState(() {
-                            _rememberMe = value ?? false;
+                            _useBiometrics = value ?? false;
                           });
                         },
                         activeColor: AppColors.greenPrimary,
@@ -216,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const Text(
-                        'Lembrar de mim',
+                        'Usar biometria',
                         style: TextStyle(color: AppColors.textMuted),
                       ),
                     ],

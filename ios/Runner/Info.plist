@@ -66,5 +66,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Utilizamos a biometria para facilitar seu acesso ao aplicativo com segurança.</string>
 </dict>
 </plist>
