@@ -41,7 +41,12 @@ class ConveniosPage extends StatelessWidget {
                     children: [
                       const SizedBox(height: 16),
 
-                      const ConveniosSearchBar(),
+                      ConveniosSearchBar(
+                        initialValue: benefitsController.searchQuery,
+                        onChanged: (query) {
+                          benefitsController.setSearchQuery(query);
+                        },
+                      ),
                       const SizedBox(height: 24),
 
                       ListenableBuilder(
@@ -49,9 +54,9 @@ class ConveniosPage extends StatelessWidget {
                         builder: (context, _) {
                           return ConveniosFilterList(
                             categories: homeController.categories,
-                            selectedCategoryId: benefitsController.selectedCategoryId,
-                            onCategorySelected: (catId) {
-                               benefitsController.setFilter(catId);
+                            selectedCategoryName: benefitsController.selectedCategoryName,
+                            onCategorySelected: (catName) {
+                               benefitsController.setFilter(catName);
                             },
                             onClearFilter: () {
                                benefitsController.setFilter(null);
@@ -65,7 +70,7 @@ class ConveniosPage extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          benefitsController.selectedCategoryId != null 
+                          benefitsController.selectedCategoryName != null 
                               ? 'Parceiros Encontrados'
                               : 'Destaques para você',
                           style: const TextStyle(
@@ -134,7 +139,7 @@ class ConveniosPage extends StatelessWidget {
                             
                             return ConvenioCard(
                               brandName: partner.name,
-                              category: partner.categoryName ?? partner.categoryId,
+                              category: partner.categoryName ?? '',
                               discount: partner.title ?? '',
                               brandColor: brandColor,
                               coverUrl: partner.cover,

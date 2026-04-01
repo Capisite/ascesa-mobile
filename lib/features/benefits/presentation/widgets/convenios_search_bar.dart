@@ -1,8 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 
-class ConveniosSearchBar extends StatelessWidget {
-  const ConveniosSearchBar({super.key});
+class ConveniosSearchBar extends StatefulWidget {
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onClear;
+  final String initialValue;
+
+  const ConveniosSearchBar({
+    super.key,
+    this.onChanged,
+    this.onClear,
+    this.initialValue = '',
+  });
+
+  @override
+  State<ConveniosSearchBar> createState() => _ConveniosSearchBarState();
+}
+
+class _ConveniosSearchBarState extends State<ConveniosSearchBar> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +51,11 @@ class ConveniosSearchBar extends StatelessWidget {
         children: [
           const Icon(Icons.search, color: AppColors.textLight, size: 24),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: TextField(
-              decoration: InputDecoration(
+              controller: _controller,
+              onChanged: widget.onChanged,
+              decoration: const InputDecoration(
                 hintText: 'Qual loja você procura?',
                 hintStyle: TextStyle(
                   color: AppColors.textLight,
@@ -37,6 +67,19 @@ class ConveniosSearchBar extends StatelessWidget {
               ),
             ),
           ),
+          if (_controller.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.close, color: AppColors.textLight, size: 20),
+              onPressed: () {
+                _controller.clear();
+                if (widget.onClear != null) {
+                  widget.onClear!();
+                } else if (widget.onChanged != null) {
+                  widget.onChanged!('');
+                }
+                setState(() {});
+              },
+            ),
           Container(
             height: 30,
             width: 1,

@@ -28,7 +28,9 @@ class PartnerModel extends Partner {
       categoryName: json['categoryName'],
       title: json['title'],
       about: json['about'],
-      offer: json['offer'] != null ? PartnerOfferModel.fromJson(json['offer']) : null,
+      offer: json['offer'] != null
+          ? PartnerOfferModel.fromJson(json['offer'])
+          : null,
       addressess: (json['addressess'] as List? ?? [])
           .map((a) => PartnerAddressModel.fromJson(a))
           .toList(),
@@ -124,10 +126,7 @@ class PartnerAddressModel extends PartnerAddress {
 }
 
 class PartnerLocationModel extends PartnerLocation {
-  PartnerLocationModel({
-    required super.type,
-    required super.coordinates,
-  });
+  PartnerLocationModel({required super.type, required super.coordinates});
 
   factory PartnerLocationModel.fromJson(Map<String, dynamic> json) {
     return PartnerLocationModel(
@@ -139,9 +138,6 @@ class PartnerLocationModel extends PartnerLocation {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'coordinates': coordinates,
-    };
+    return {'type': type, 'coordinates': coordinates};
   }
 }

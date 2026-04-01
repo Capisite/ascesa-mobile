@@ -9,7 +9,8 @@ class BenefitsController extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   List<Partner> _allPartners = [];
-  String? _selectedCategoryId;
+  String? _selectedCategoryName;
+  String _searchQuery = '';
 
   BenefitsController({required this.getPartnersUseCase});
 
@@ -17,13 +18,28 @@ class BenefitsController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   
   List<Partner> get partners {
-    if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
-      return _allPartners;
+    List<Partner> filtered = _allPartners;
+    
+    // Filter by Category
+    if (_selectedCategoryName != null && _selectedCategoryName!.isNotEmpty) {
+      filtered = filtered.where((p) => p.categoryName == _selectedCategoryName).toList();
     }
-    return _allPartners.where((p) => p.categoryId == _selectedCategoryId || p.categoryName == _selectedCategoryId).toList();
+    
+    // Filter by Search Query
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((p) {
+        final nameMatch = p.name.toLowerCase().contains(query);
+        final titleMatch = p.title?.toLowerCase().contains(query) ?? false;
+        return nameMatch || titleMatch;
+      }).toList();
+    }
+    
+    return filtered;
   }
 
-  String? get selectedCategoryId => _selectedCategoryId;
+  String? get selectedCategoryName => _selectedCategoryName;
+  String get searchQuery => _searchQuery;
 
   Future<void> fetchAllPartners() async {
     _isLoading = true;
@@ -49,8 +65,13 @@ class BenefitsController extends ChangeNotifier {
     }
   }
 
-  void setFilter(String? categoryId) {
-    _selectedCategoryId = categoryId;
+  void setFilter(String? categoryName) {
+    _selectedCategoryName = categoryName;
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
     notifyListeners();
   }
 
@@ -61,7 +82,8 @@ class BenefitsController extends ChangeNotifier {
   
   void reset() {
     _allPartners = [];
-    _selectedCategoryId = null;
+    _selectedCategoryName = null;
+    _searchQuery = '';
     _errorMessage = null;
     notifyListeners();
   }
