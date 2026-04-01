@@ -4,6 +4,10 @@ import 'package:ascesa/core/services/geofencing_service.dart';
 import 'package:ascesa/features/auth/presentation/pages/login_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// GlobalKey para acessar o NavigatorState de qualquer lugar do app.
+/// Usado pelo NotificationService para navegar ao clicar na notificação.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -37,6 +41,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Ascesa Mobile',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

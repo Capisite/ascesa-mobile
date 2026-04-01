@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:ascesa/core/services/notification_service.dart';
-import 'package:ascesa/core/services/geofencing_service.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
@@ -198,29 +196,11 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'test_notif',
-            onPressed: () {
-              NotificationService.showNotification(
-                id: 999,
-                title: 'Teste de Notificação',
-                body: 'Se você está vendo isso, o serviço de mensagens está funcionando!',
-              );
-            },
-            backgroundColor: Colors.orange,
-            child: const Icon(Icons.notification_important, color: Colors.white),
-          ),
-          const SizedBox(height: 16),
-          FloatingActionButton(
-            heroTag: 'my_location',
-            onPressed: _onMyLocationPressed,
-            backgroundColor: const Color(0xFF1B5E20),
-            child: const Icon(Icons.my_location, color: Colors.white),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'my_location',
+        onPressed: _onMyLocationPressed,
+        backgroundColor: const Color(0xFF1B5E20),
+        child: const Icon(Icons.my_location, color: Colors.white),
       ),
       body: Stack(
         children: [

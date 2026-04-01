@@ -126,6 +126,7 @@ void callbackDispatcher() async {
             id: zoneId.hashCode,
             title: "📍 Parceiro Ascesa Próximo!",
             body: "Você está perto de um local com benefícios exclusivos. Abra o app para conferir!",
+            payload: zoneId,
           );
           debugPrint("Notificação enviada com sucesso para zona: $zoneId");
         } catch (e, stackTrace) {

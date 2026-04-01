@@ -83,6 +83,27 @@ class BenefitsController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Busca um parceiro pelo ID. Usado para navegar ao mapa via notificação.
+  Partner? findPartnerById(String partnerId) {
+    try {
+      return _allPartners.firstWhere((p) => p.id == partnerId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Busca um parceiro por um fragmento do zone ID do geofencing.
+  /// O zoneId tem formato: zone_{partnerId}_{addressName}
+  Partner? findPartnerByZoneId(String zoneId) {
+    // Extrai o partnerId do zoneId: zone_{partnerId}_{rest}
+    final parts = zoneId.split('_');
+    if (parts.length >= 2) {
+      final partnerId = parts[1];
+      return findPartnerById(partnerId);
+    }
+    return null;
+  }
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();

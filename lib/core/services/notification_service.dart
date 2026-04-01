@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  // Callback global para quando o usuário clica na notificação
+  static void Function(String? payload)? onNotificationTapped;
 
   static Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -22,6 +26,7 @@ class NotificationService {
 
     await _notificationsPlugin.initialize(
       initializationSettings,
+      onDidReceiveNotificationResponse: _onNotificationResponse,
     );
 
     // Create the channel explicitly on Android
@@ -39,12 +44,31 @@ class NotificationService {
       );
       await androidImplementation.createNotificationChannel(channel);
     }
+
+    // Verifica se o app foi aberto via notificação (app estava fechado)
+    final launchDetails = await _notificationsPlugin.getNotificationAppLaunchDetails();
+    if (launchDetails != null && 
+        launchDetails.didNotificationLaunchApp &&
+        launchDetails.notificationResponse != null) {
+      // Atrasa para garantir que o app inicializou completamente
+      Future.delayed(const Duration(seconds: 2), () {
+        _onNotificationResponse(launchDetails.notificationResponse!);
+      });
+    }
+  }
+
+  static void _onNotificationResponse(NotificationResponse response) {
+    debugPrint("[NotificationService] Notificação clicada! Payload: ${response.payload}");
+    if (response.payload != null && onNotificationTapped != null) {
+      onNotificationTapped!(response.payload);
+    }
   }
 
   static Future<void> showNotification({
     required int id,
     required String title,
     required String body,
+    String? payload,
   }) async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'geofence_notifications',
@@ -70,6 +94,7 @@ class NotificationService {
       title,
       body,
       notificationDetails,
+      payload: payload,
     );
   }
 }

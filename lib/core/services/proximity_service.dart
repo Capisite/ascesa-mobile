@@ -108,6 +108,7 @@ class ProximityService {
             id: partnerId.hashCode,
             title: '📍 ${partner.name} está próximo!',
             body: 'Você está a $distanceFormatted. Confira os benefícios exclusivos!',
+            payload: partnerId,
           );
         }
       }

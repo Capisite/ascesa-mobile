@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/core/services/notification_service.dart';
+import 'package:ascesa/main.dart' show navigatorKey;
 import 'package:ascesa/features/home/presentation/pages/home_page.dart';
 import 'package:ascesa/features/benefits/presentation/pages/convenios_page.dart';
+import 'package:ascesa/features/benefits/presentation/pages/benefits_map_page.dart';
 import 'package:ascesa/features/news/presentation/pages/noticias_page.dart';
 import 'package:ascesa/features/member_area/presentation/pages/configuracoes_page.dart';
 
@@ -11,6 +14,7 @@ import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_categor
 import 'package:ascesa/features/benefits/data/repositories/benefits_repository_impl.dart';
 import 'package:ascesa/features/benefits/data/datasources/benefits_remote_data_source.dart';
 import 'package:ascesa/features/benefits/data/datasources/benefits_local_data_source.dart';
+import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 
 import 'package:ascesa/features/home/presentation/controllers/home_controller.dart';
 import 'package:ascesa/features/home/domain/usecases/get_categories_use_case.dart';
@@ -95,6 +99,50 @@ class MainPageState extends State<MainPage> {
       const NoticiasPage(),
       ConfiguracoesPage(userProfileController: _userProfileController),
     ];
+
+    // Configura callback para quando o usuário clica na notificação
+    _setupNotificationNavigation();
+  }
+
+  void _setupNotificationNavigation() {
+    NotificationService.onNotificationTapped = (payload) {
+      if (payload == null || payload.isEmpty) return;
+
+      debugPrint("[MainPage] Notificação clicada com payload: $payload");
+
+      // Tenta encontrar o parceiro
+      // payload pode ser:
+      //   - partnerId direto (do ProximityService)
+      //   - zoneId no formato "zone_{partnerId}_{addressName}" (do GeofencingService)
+      Partner? partner;
+      
+      if (payload.startsWith('zone_')) {
+        partner = _benefitsController.findPartnerByZoneId(payload);
+      } else {
+        partner = _benefitsController.findPartnerById(payload);
+      }
+
+      if (partner != null) {
+        debugPrint("[MainPage] Navegando ao mapa com parceiro: ${partner.name}");
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => BenefitsMapPage(
+              benefitsController: _benefitsController,
+              initialPartner: partner,
+            ),
+          ),
+        );
+      } else {
+        debugPrint("[MainPage] Parceiro não encontrado para payload: $payload. Abrindo mapa geral.");
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => BenefitsMapPage(
+              benefitsController: _benefitsController,
+            ),
+          ),
+        );
+      }
+    };
   }
 
   void _onUserProfileUpdated() {
@@ -116,6 +164,7 @@ class MainPageState extends State<MainPage> {
 
   @override
   void dispose() {
+    NotificationService.onNotificationTapped = null;
     _userProfileController.removeListener(_onUserProfileUpdated);
     super.dispose();
   }
