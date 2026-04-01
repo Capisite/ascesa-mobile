@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/benefits/presentation/widgets/convenios_header.dart';
-import 'package:flutter_project/features/benefits/presentation/widgets/convenios_search_bar.dart';
-import 'package:flutter_project/features/benefits/presentation/widgets/convenios_filter_list.dart';
-import 'package:flutter_project/features/benefits/presentation/widgets/convenio_card.dart';
-import 'package:flutter_project/features/benefits/presentation/controllers/benefits_controller.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/benefits/presentation/widgets/convenios_header.dart';
+import 'package:ascesa/features/benefits/presentation/widgets/convenios_search_bar.dart';
+import 'package:ascesa/features/benefits/presentation/widgets/convenios_filter_list.dart';
+import 'package:ascesa/features/benefits/presentation/widgets/convenio_card.dart';
+import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
 
-import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
-import 'package:flutter_project/features/benefits/presentation/pages/benefits_map_page.dart';
+import 'package:ascesa/features/home/presentation/controllers/home_controller.dart';
+import 'package:ascesa/features/benefits/presentation/pages/benefits_map_page.dart';
 
 class ConveniosPage extends StatelessWidget {
   final BenefitsController benefitsController;
@@ -134,10 +134,21 @@ class ConveniosPage extends StatelessWidget {
                             
                             return ConvenioCard(
                               brandName: partner.name,
-                              category: partner.categoryId,
+                              category: partner.categoryName ?? partner.categoryId,
                               discount: partner.title ?? '',
                               brandColor: brandColor,
                               coverUrl: partner.cover,
+                              onSeeOnMap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BenefitsMapPage(
+                                      benefitsController: benefitsController,
+                                      initialPartner: partner,
+                                    ),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),

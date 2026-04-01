@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/main/presentation/pages/main_page.dart';
-import 'package:flutter_project/features/news/data/datasources/news_remote_datasource.dart';
-import 'package:flutter_project/features/news/data/repositories/news_repository_impl.dart';
-import 'package:flutter_project/features/news/domain/usecases/get_news.dart';
-import 'package:flutter_project/features/news/presentation/controllers/news_controller.dart';
-import 'package:flutter_project/features/news/presentation/widgets/news_card.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/main/presentation/pages/main_page.dart';
+import 'package:ascesa/features/news/data/datasources/news_remote_datasource.dart';
+import 'package:ascesa/features/news/data/repositories/news_repository_impl.dart';
+import 'package:ascesa/features/news/domain/usecases/get_news.dart';
+import 'package:ascesa/features/news/presentation/controllers/news_controller.dart';
+import 'package:ascesa/features/news/presentation/widgets/news_card.dart';
 import 'package:intl/intl.dart';
 
 

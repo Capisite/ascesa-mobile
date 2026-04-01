@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/home/presentation/pages/home_page.dart';
-import 'package:flutter_project/features/benefits/presentation/pages/convenios_page.dart';
-import 'package:flutter_project/features/news/presentation/pages/noticias_page.dart';
-import 'package:flutter_project/features/member_area/presentation/pages/configuracoes_page.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/home/presentation/pages/home_page.dart';
+import 'package:ascesa/features/benefits/presentation/pages/convenios_page.dart';
+import 'package:ascesa/features/news/presentation/pages/noticias_page.dart';
+import 'package:ascesa/features/member_area/presentation/pages/configuracoes_page.dart';
 
-import 'package:flutter_project/features/auth/domain/entities/user.dart';
-import 'package:flutter_project/features/benefits/presentation/controllers/benefits_controller.dart';
-import 'package:flutter_project/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
-import 'package:flutter_project/features/benefits/data/repositories/benefits_repository_impl.dart';
-import 'package:flutter_project/features/benefits/data/datasources/benefits_remote_data_source.dart';
-import 'package:flutter_project/features/benefits/data/datasources/benefits_local_data_source.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
+import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
+import 'package:ascesa/features/benefits/data/repositories/benefits_repository_impl.dart';
+import 'package:ascesa/features/benefits/data/datasources/benefits_remote_data_source.dart';
+import 'package:ascesa/features/benefits/data/datasources/benefits_local_data_source.dart';
 
-import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
-import 'package:flutter_project/features/home/domain/usecases/get_categories_use_case.dart';
-import 'package:flutter_project/features/home/data/repositories/home_repository_impl.dart';
-import 'package:flutter_project/features/home/data/datasources/home_remote_data_source.dart';
-import 'package:flutter_project/features/home/data/datasources/home_local_data_source.dart';
-import 'package:flutter_project/features/member_area/data/datasources/user_remote_data_source.dart';
-import 'package:flutter_project/features/member_area/domain/usecases/update_user_use_case.dart';
-import 'package:flutter_project/features/member_area/presentation/controllers/user_profile_controller.dart';
-import 'package:flutter_project/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:ascesa/features/home/presentation/controllers/home_controller.dart';
+import 'package:ascesa/features/home/domain/usecases/get_categories_use_case.dart';
+import 'package:ascesa/features/home/data/repositories/home_repository_impl.dart';
+import 'package:ascesa/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:ascesa/features/home/data/datasources/home_local_data_source.dart';
+import 'package:ascesa/features/member_area/data/datasources/user_remote_data_source.dart';
+import 'package:ascesa/features/member_area/domain/usecases/update_user_use_case.dart';
+import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
+import 'package:ascesa/features/auth/data/datasources/auth_local_data_source.dart';
 
 class MainPage extends StatefulWidget {
   final User user;

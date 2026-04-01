@@ -1,4 +1,4 @@
-import 'package:flutter_project/features/benefits/domain/entities/partner.dart';
+import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 
 class PartnerModel extends Partner {
   PartnerModel({

@@ -1,4 +1,4 @@
-import 'package:flutter_project/features/news/domain/entities/news.dart';
+import 'package:ascesa/features/news/domain/entities/news.dart';
 
 class NewsModel extends News {
   const NewsModel({

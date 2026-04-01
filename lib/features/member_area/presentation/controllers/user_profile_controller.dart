@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/features/auth/domain/entities/user.dart';
-import 'package:flutter_project/features/member_area/domain/usecases/update_user_use_case.dart';
-import 'package:flutter_project/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/member_area/domain/usecases/update_user_use_case.dart';
+import 'package:ascesa/features/auth/data/datasources/auth_local_data_source.dart';
 
 class UserProfileController extends ChangeNotifier {
   final UpdateUserUseCase updateUserUseCase;

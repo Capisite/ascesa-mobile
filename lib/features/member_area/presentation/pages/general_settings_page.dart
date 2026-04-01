@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/auth/presentation/pages/login_page.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/auth/presentation/pages/login_page.dart';
 
 class GeneralSettingsPage extends StatefulWidget {
   const GeneralSettingsPage({super.key});

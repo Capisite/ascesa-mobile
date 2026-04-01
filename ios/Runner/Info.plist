@@ -70,5 +70,14 @@
 	<string>Utilizamos a biometria para facilitar seu acesso ao aplicativo com segurança.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Utilizamos sua localização para mostrar os parceiros e benefícios mais próximos de você.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Utilizamos sua localização em segundo plano para avisar quando você estiver perto de um parceiro com benefícios.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Utilizamos sua localização em segundo plano para avisar quando você estiver perto de um parceiro com benefícios.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

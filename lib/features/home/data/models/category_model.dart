@@ -1,4 +1,4 @@
-import 'package:flutter_project/features/home/domain/entities/category.dart';
+import 'package:ascesa/features/home/domain/entities/category.dart';
 
 class CategoryModel extends Category {
   CategoryModel({

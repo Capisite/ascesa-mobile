@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_project/features/benefits/data/models/partner_model.dart';
+import 'package:ascesa/features/benefits/data/models/partner_model.dart';
 
 class BenefitsLocalDataSource {
   static const String _partnersKey = 'CACHED_PARTNERS';

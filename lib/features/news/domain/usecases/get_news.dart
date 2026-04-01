@@ -1,5 +1,5 @@
-import 'package:flutter_project/features/news/domain/entities/news.dart';
-import 'package:flutter_project/features/news/domain/repositories/news_repository.dart';
+import 'package:ascesa/features/news/domain/entities/news.dart';
+import 'package:ascesa/features/news/domain/repositories/news_repository.dart';
 
 class GetNews {
   final NewsRepository repository;

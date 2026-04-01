@@ -1,5 +1,5 @@
-import 'package:flutter_project/features/auth/data/models/user_model.dart';
-import 'package:flutter_project/features/auth/domain/entities/auth_token.dart';
+import 'package:ascesa/features/auth/data/models/user_model.dart';
+import 'package:ascesa/features/auth/domain/entities/auth_token.dart';
 
 class AuthTokenModel extends AuthToken {
   AuthTokenModel({

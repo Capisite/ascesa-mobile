@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_project/core/constants/api_constants.dart';
-import 'package:flutter_project/features/benefits/data/models/partner_model.dart';
+import 'package:ascesa/core/constants/api_constants.dart';
+import 'package:ascesa/features/benefits/data/models/partner_model.dart';
 
 class BenefitsRemoteDataSource {
   final Dio _dio;

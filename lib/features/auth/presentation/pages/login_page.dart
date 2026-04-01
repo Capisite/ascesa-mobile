@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/auth/presentation/pages/register_page.dart';
-import 'package:flutter_project/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:flutter_project/features/main/presentation/pages/main_page.dart';
-import 'package:flutter_project/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:flutter_project/features/auth/domain/usecases/login_use_case.dart';
-import 'package:flutter_project/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:flutter_project/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/auth/presentation/pages/register_page.dart';
+import 'package:ascesa/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:ascesa/features/main/presentation/pages/main_page.dart';
+import 'package:ascesa/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:ascesa/features/auth/domain/usecases/login_use_case.dart';
+import 'package:ascesa/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:ascesa/features/auth/data/datasources/auth_remote_data_source.dart';
 
-import 'package:flutter_project/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:flutter_project/core/services/biometric_service.dart';
+import 'package:ascesa/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:ascesa/core/services/biometric_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

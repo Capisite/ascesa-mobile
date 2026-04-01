@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/features/benefits/domain/entities/partner.dart';
-import 'package:flutter_project/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
+import 'package:ascesa/features/benefits/domain/entities/partner.dart';
+import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
+import 'package:ascesa/core/services/geofencing_service.dart';
 
 class BenefitsController extends ChangeNotifier {
   final GetPartnersByCategoryUseCase getPartnersUseCase;
@@ -19,7 +20,7 @@ class BenefitsController extends ChangeNotifier {
     if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
       return _allPartners;
     }
-    return _allPartners.where((p) => p.categoryId == _selectedCategoryId).toList();
+    return _allPartners.where((p) => p.categoryId == _selectedCategoryId || p.categoryName == _selectedCategoryId).toList();
   }
 
   String? get selectedCategoryId => _selectedCategoryId;
@@ -31,8 +32,16 @@ class BenefitsController extends ChangeNotifier {
 
     try {
       _allPartners = await getPartnersUseCase.execute();
+      
       _isLoading = false;
       notifyListeners();
+
+      // Register partners for geofencing (asynchronous, don't wait if it fails for UI purposes)
+      try {
+        await GeofencingService.registerPartners(_allPartners);
+      } catch (geofenceError) {
+        debugPrint("Erro ao registrar geofencing: $geofenceError");
+      }
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
       _isLoading = false;

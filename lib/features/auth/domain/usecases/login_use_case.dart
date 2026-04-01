@@ -1,5 +1,5 @@
-import 'package:flutter_project/features/auth/domain/entities/auth_token.dart';
-import 'package:flutter_project/features/auth/domain/repositories/auth_repository.dart';
+import 'package:ascesa/features/auth/domain/entities/auth_token.dart';
+import 'package:ascesa/features/auth/domain/repositories/auth_repository.dart';
 
 class LoginUseCase {
   final AuthRepository repository;

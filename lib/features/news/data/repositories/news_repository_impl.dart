@@ -1,6 +1,6 @@
-import 'package:flutter_project/features/news/data/datasources/news_remote_datasource.dart';
-import 'package:flutter_project/features/news/domain/entities/news.dart';
-import 'package:flutter_project/features/news/domain/repositories/news_repository.dart';
+import 'package:ascesa/features/news/data/datasources/news_remote_datasource.dart';
+import 'package:ascesa/features/news/domain/entities/news.dart';
+import 'package:ascesa/features/news/domain/repositories/news_repository.dart';
 
 class NewsRepositoryImpl implements NewsRepository {
   final NewsRemoteDataSource remoteDataSource;

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_project/features/auth/domain/entities/user.dart';
-import 'package:flutter_project/core/services/biometric_service.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/core/services/biometric_service.dart';
 
 class AuthLocalDataSource {
   static const String _userKey = 'user_data';

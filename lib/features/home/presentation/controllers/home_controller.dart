@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/features/home/domain/entities/category.dart';
-import 'package:flutter_project/features/home/domain/usecases/get_categories_use_case.dart';
+import 'package:ascesa/features/home/domain/entities/category.dart';
+import 'package:ascesa/features/home/domain/usecases/get_categories_use_case.dart';
 
 class HomeController extends ChangeNotifier {
   final GetCategoriesUseCase getCategoriesUseCase;

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
 
 class NewsDetailPage extends StatelessWidget {
   final String title;
   final String date;
   final String imageUrl;
+  final String description;
 
   const NewsDetailPage({
     super.key,
     required this.title,
     required this.date,
     required this.imageUrl,
+    required this.description,
   });
 
   @override
@@ -104,39 +106,30 @@ class NewsDetailPage extends StatelessWidget {
             // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                imageUrl,
-                width: double.infinity,
-                height: 200,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: double.infinity,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: AppColors.greenPrimary,
-                      borderRadius: BorderRadius.circular(16),
+              child: imageUrl.startsWith('http')
+                  ? Image.network(
+                      imageUrl,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildErrorPlaceholder(),
+                    )
+                  : Image.asset(
+                      imageUrl,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildErrorPlaceholder(),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.article_outlined,
-                        color: Colors.white,
-                        size: 64,
-                      ),
-                    ),
-                  );
-                },
-              ),
             ),
             const SizedBox(height: 32),
 
             // Content
-            const Text(
-              'A Associação dos Colaboradores das Entidades do SICOOB e Afins (ASCESA) tem o prazer de anunciar mais uma grande conquista para todos os nossos associados.\n\n'
-              'Firmamos uma nova parceria estratégica com uma ampla rede farmácias em todo o território nacional, garantindo descontos exclusivos que variam de 15% a 30% em medicamentos de marca e genéricos.\n\n'
-              'Para utilizar o benefício, basta apresentar a sua Carteirinha Virtual diretamente na tela do celular junto com um documento com foto no momento da compra. '
-              'Esta é mais uma ação da ASCESA focada no bem-estar e na economia da família cooperada.',
-              style: TextStyle(
+            Text(
+              description,
+              style: const TextStyle(
                 fontSize: 16,
                 color: AppColors.greenDark,
                 height: 1.6,
@@ -144,6 +137,24 @@ class NewsDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 48),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: BoxDecoration(
+        color: AppColors.greenPrimary,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.article_outlined,
+          color: Colors.white,
+          size: 64,
         ),
       ),
     );

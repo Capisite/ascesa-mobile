@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
 class DependentsPage extends StatefulWidget {

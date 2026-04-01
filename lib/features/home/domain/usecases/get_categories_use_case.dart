@@ -1,5 +1,5 @@
-import 'package:flutter_project/features/home/domain/entities/category.dart';
-import 'package:flutter_project/features/home/domain/repositories/home_repository.dart';
+import 'package:ascesa/features/home/domain/entities/category.dart';
+import 'package:ascesa/features/home/domain/repositories/home_repository.dart';
 
 class GetCategoriesUseCase {
   final HomeRepository repository;

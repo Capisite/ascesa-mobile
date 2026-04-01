@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_project/core/constants/api_constants.dart';
-import 'package:flutter_project/features/home/data/models/category_model.dart';
+import 'package:ascesa/core/constants/api_constants.dart';
+import 'package:ascesa/features/home/data/models/category_model.dart';
 
 class HomeRemoteDataSource {
   final Dio _dio;

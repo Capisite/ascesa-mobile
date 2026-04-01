@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_project/features/home/data/models/category_model.dart';
+import 'package:ascesa/features/home/data/models/category_model.dart';
 
 class HomeLocalDataSource {
   static const String _categoriesKey = 'CACHED_CATEGORIES';

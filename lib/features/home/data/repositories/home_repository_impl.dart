@@ -1,7 +1,7 @@
-import 'package:flutter_project/features/home/data/datasources/home_local_data_source.dart';
-import 'package:flutter_project/features/home/data/datasources/home_remote_data_source.dart';
-import 'package:flutter_project/features/home/domain/entities/category.dart';
-import 'package:flutter_project/features/home/domain/repositories/home_repository.dart';
+import 'package:ascesa/features/home/data/datasources/home_local_data_source.dart';
+import 'package:ascesa/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:ascesa/features/home/domain/entities/category.dart';
+import 'package:ascesa/features/home/domain/repositories/home_repository.dart';
 
 class HomeRepositoryImpl implements HomeRepository {
   final HomeRemoteDataSource remoteDataSource;

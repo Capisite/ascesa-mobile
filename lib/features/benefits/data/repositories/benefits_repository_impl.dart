@@ -1,7 +1,7 @@
-import 'package:flutter_project/features/benefits/data/datasources/benefits_local_data_source.dart';
-import 'package:flutter_project/features/benefits/data/datasources/benefits_remote_data_source.dart';
-import 'package:flutter_project/features/benefits/domain/entities/partner.dart';
-import 'package:flutter_project/features/benefits/domain/repositories/benefits_repository.dart';
+import 'package:ascesa/features/benefits/data/datasources/benefits_local_data_source.dart';
+import 'package:ascesa/features/benefits/data/datasources/benefits_remote_data_source.dart';
+import 'package:ascesa/features/benefits/domain/entities/partner.dart';
+import 'package:ascesa/features/benefits/domain/repositories/benefits_repository.dart';
 
 class BenefitsRepositoryImpl implements BenefitsRepository {
   final BenefitsRemoteDataSource remoteDataSource;

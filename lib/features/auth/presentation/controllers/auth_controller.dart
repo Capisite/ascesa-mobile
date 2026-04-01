@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/features/auth/domain/entities/user.dart';
-import 'package:flutter_project/features/auth/domain/usecases/login_use_case.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/auth/domain/usecases/login_use_case.dart';
 
 class AuthController extends ChangeNotifier {
   final LoginUseCase loginUseCase;

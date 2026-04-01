@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/auth/presentation/widgets/custom_text_field.dart';
-import 'package:flutter_project/features/auth/presentation/widgets/custom_dropdown.dart';
-import 'package:flutter_project/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/auth/presentation/widgets/custom_text_field.dart';
+import 'package:ascesa/features/auth/presentation/widgets/custom_dropdown.dart';
+import 'package:ascesa/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class RegisterPage extends StatefulWidget {

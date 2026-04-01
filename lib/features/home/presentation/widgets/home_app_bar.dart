@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
 
-import 'package:flutter_project/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final User user;

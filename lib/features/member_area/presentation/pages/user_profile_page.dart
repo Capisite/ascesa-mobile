@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/member_area/presentation/controllers/user_profile_controller.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
 
 class UserProfilePage extends StatefulWidget {
   final UserProfileController controller;

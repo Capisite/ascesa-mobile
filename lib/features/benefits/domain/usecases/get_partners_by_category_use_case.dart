@@ -1,5 +1,5 @@
-import 'package:flutter_project/features/benefits/domain/entities/partner.dart';
-import 'package:flutter_project/features/benefits/domain/repositories/benefits_repository.dart';
+import 'package:ascesa/features/benefits/domain/entities/partner.dart';
+import 'package:ascesa/features/benefits/domain/repositories/benefits_repository.dart';
 
 class GetPartnersByCategoryUseCase {
   final BenefitsRepository repository;

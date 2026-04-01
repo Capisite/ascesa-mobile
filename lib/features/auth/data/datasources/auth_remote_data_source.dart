@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_project/core/constants/api_constants.dart';
+import 'package:ascesa/core/constants/api_constants.dart';
 
 class AuthRemoteDataSource {
   final Dio _dio;

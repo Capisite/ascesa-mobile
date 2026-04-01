@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/features/news/domain/entities/news.dart';
-import 'package:flutter_project/features/news/domain/usecases/get_news.dart';
+import 'package:ascesa/features/news/domain/entities/news.dart';
+import 'package:ascesa/features/news/domain/usecases/get_news.dart';
 
 class NewsController extends ChangeNotifier {
   final GetNews getNewsUseCase;

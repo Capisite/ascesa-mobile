@@ -1,8 +1,8 @@
-import 'package:flutter_project/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:flutter_project/features/auth/data/models/auth_token_model.dart';
-import 'package:flutter_project/features/auth/data/models/login_request_model.dart';
-import 'package:flutter_project/features/auth/domain/entities/auth_token.dart';
-import 'package:flutter_project/features/auth/domain/repositories/auth_repository.dart';
+import 'package:ascesa/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:ascesa/features/auth/data/models/auth_token_model.dart';
+import 'package:ascesa/features/auth/data/models/login_request_model.dart';
+import 'package:ascesa/features/auth/domain/entities/auth_token.dart';
+import 'package:ascesa/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;

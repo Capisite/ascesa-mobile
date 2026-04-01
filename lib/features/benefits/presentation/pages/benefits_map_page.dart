@@ -1,18 +1,23 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/benefits/domain/entities/partner.dart';
-import 'package:flutter_project/features/benefits/presentation/controllers/benefits_controller.dart';
-import 'package:flutter_project/features/benefits/presentation/widgets/convenio_card.dart';
+import 'package:ascesa/core/services/notification_service.dart';
+import 'package:ascesa/core/services/geofencing_service.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/benefits/domain/entities/partner.dart';
+import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
+import 'package:ascesa/features/benefits/presentation/widgets/convenio_card.dart';
 
 class BenefitsMapPage extends StatefulWidget {
   final BenefitsController benefitsController;
+  final Partner? initialPartner;
 
   const BenefitsMapPage({
     super.key,
     required this.benefitsController,
+    this.initialPartner,
   });
 
   @override
@@ -20,23 +25,48 @@ class BenefitsMapPage extends StatefulWidget {
 }
 
 class _BenefitsMapPageState extends State<BenefitsMapPage> {
-  final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
-  Set<Marker> _markers = {};
+  final MapController _mapController = MapController();
+  List<Marker> _markers = [];
   Partner? _selectedPartner;
+  LatLng? _currentUserPosition;
+  StreamSubscription<Position>? _positionSubscription;
 
-  static const CameraPosition _initialPosition = CameraPosition(
-    target: LatLng(-15.7942, -47.8822), // Brasília default
-    zoom: 12.0,
-  );
+  static const LatLng _initialPosition = LatLng(-15.7942, -47.8822); // Brasília default
 
   @override
   void initState() {
     super.initState();
-    _determinePosition();
+    if (widget.initialPartner != null) {
+      _selectedPartner = widget.initialPartner;
+    }
+    _determineInitialPosition();
+    _initLocationStream();
     _loadMarkers();
   }
 
-  Future<void> _determinePosition() async {
+  @override
+  void dispose() {
+    _positionSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _determineInitialPosition() async {
+    // If we have an initial partner, we'll center on it instead of user location
+    if (widget.initialPartner != null) {
+      for (var address in widget.initialPartner!.addressess) {
+        if (address.location != null && address.location!.coordinates.length >= 2) {
+          final lat = address.location!.coordinates[1];
+          final lng = address.location!.coordinates[0];
+          final pos = LatLng(lat, lng);
+          
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _mapController.move(pos, 15.0);
+          });
+          break;
+        }
+      }
+    }
+
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -51,16 +81,15 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     
     if (permission == LocationPermission.deniedForever) return;
     
-    // Tentar obter a última posição conhecida primeiro para agilizar
     final lastKnown = await Geolocator.getLastKnownPosition();
     if (lastKnown != null && mounted) {
-      final GoogleMapController controller = await _controller.future;
-      controller.moveCamera(
-        CameraUpdate.newLatLngZoom(
-          LatLng(lastKnown.latitude, lastKnown.longitude),
-          14.0,
-        ),
-      );
+      final pos = LatLng(lastKnown.latitude, lastKnown.longitude);
+      setState(() {
+        _currentUserPosition = pos;
+      });
+      if (widget.initialPartner == null) {
+        _mapController.move(pos, 14.0);
+      }
     }
 
     try {
@@ -71,43 +100,67 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         ),
       );
 
-      final GoogleMapController controller = await _controller.future;
-      controller.animateCamera(
-        CameraUpdate.newLatLngZoom(
-          LatLng(position.latitude, position.longitude),
-          14.0,
-        ),
-      );
+      final pos = LatLng(position.latitude, position.longitude);
+      if (mounted) {
+        setState(() {
+          _currentUserPosition = pos;
+        });
+        if (widget.initialPartner == null) {
+          _mapController.move(pos, 14.0);
+        }
+      }
     } catch (e) {
-      debugPrint('Erro ao obter localização precisa: $e');
-      // Não trava a tela se der erro, apenas mantém a última posição ou a inicial
+      debugPrint('Erro ao obter localização inicial: $e');
     }
+  }
+
+  void _initLocationStream() {
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen((Position position) {
+      if (mounted) {
+        final newPos = LatLng(position.latitude, position.longitude);
+        setState(() {
+          _currentUserPosition = newPos;
+        });
+        // Auto-follow: only if no partner is initially selected or we aren't in "selection mode"
+        if (widget.initialPartner == null) {
+          _mapController.move(newPos, _mapController.camera.zoom);
+        }
+      }
+    });
   }
 
   void _loadMarkers() {
     final partners = widget.benefitsController.partners;
-    final Set<Marker> newMarkers = {};
+    final List<Marker> newMarkers = [];
 
     for (var partner in partners) {
       for (var address in partner.addressess) {
         if (address.location != null && address.location!.coordinates.length >= 2) {
-          // GeoJSON is [longitude, latitude]
           final lat = address.location!.coordinates[1];
           final lng = address.location!.coordinates[0];
 
           newMarkers.add(
             Marker(
-              markerId: MarkerId('${partner.id}_${address.nameUnit ?? ''}'),
-              position: LatLng(lat, lng),
-              infoWindow: InfoWindow(
-                title: partner.name,
-                snippet: partner.title ?? 'Ver detalhes',
+              point: LatLng(lat, lng),
+              width: 40,
+              height: 40,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedPartner = partner;
+                  });
+                },
+                child: const Icon(
+                  Icons.location_on,
+                  color: AppColors.greenPrimary,
+                  size: 40,
+                ),
               ),
-              onTap: () {
-                setState(() {
-                  _selectedPartner = partner;
-                });
-              },
             ),
           );
         }
@@ -117,6 +170,14 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     setState(() {
       _markers = newMarkers;
     });
+  }
+
+  void _onMyLocationPressed() {
+    if (_currentUserPosition != null) {
+      _mapController.move(_currentUserPosition!, 15.0);
+    } else {
+      _determineInitialPosition();
+    }
   }
 
   @override
@@ -136,29 +197,85 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.greenDark),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location, color: AppColors.greenPrimary),
-            onPressed: _determinePosition,
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'test_notif',
+            onPressed: () {
+              NotificationService.showNotification(
+                id: 999,
+                title: 'Teste de Notificação',
+                body: 'Se você está vendo isso, o serviço de mensagens está funcionando!',
+              );
+            },
+            backgroundColor: Colors.orange,
+            child: const Icon(Icons.notification_important, color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: 'my_location',
+            onPressed: _onMyLocationPressed,
+            backgroundColor: const Color(0xFF1B5E20),
+            child: const Icon(Icons.my_location, color: Colors.white),
           ),
         ],
       ),
       body: Stack(
         children: [
-          GoogleMap(
-            mapType: MapType.normal,
-            initialCameraPosition: _initialPosition,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            markers: _markers,
-            onMapCreated: (GoogleMapController controller) {
-              _controller.complete(controller);
-            },
-            onTap: (_) {
-              setState(() {
-                _selectedPartner = null;
-              });
-            },
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _initialPosition,
+              initialZoom: 12.0,
+              onTap: (_, __) {
+                setState(() {
+                  _selectedPartner = null;
+                });
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.ascesa.app',
+              ),
+              MarkerLayer(
+                markers: _markers,
+              ),
+              if (_currentUserPosition != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _currentUserPosition!,
+                      width: 25,
+                      height: 25,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution(
+                    'OpenStreetMap contributors',
+                    onTap: () => {},
+                  ),
+                ],
+              ),
+            ],
           ),
           if (_selectedPartner != null)
             Positioned(
@@ -181,3 +298,4 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     );
   }
 }
+

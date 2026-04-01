@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/home/presentation/widgets/home_app_bar.dart';
-import 'package:flutter_project/features/home/presentation/widgets/quick_access_section.dart';
-import 'package:flutter_project/features/home/presentation/widgets/promo_banner.dart';
-import 'package:flutter_project/features/home/presentation/widgets/latest_news_section.dart';
-import 'package:flutter_project/features/home/presentation/widgets/virtual_id_card_dialog.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/home/presentation/widgets/home_app_bar.dart';
+import 'package:ascesa/features/home/presentation/widgets/quick_access_section.dart';
+import 'package:ascesa/features/home/presentation/widgets/promo_banner.dart';
+import 'package:ascesa/features/home/presentation/widgets/latest_news_section.dart';
+import 'package:ascesa/features/home/presentation/widgets/virtual_id_card_dialog.dart';
 
-import 'package:flutter_project/features/auth/domain/entities/user.dart';
-import 'package:flutter_project/features/home/presentation/controllers/home_controller.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/home/presentation/controllers/home_controller.dart';
 
 class HomePage extends StatefulWidget {
   final User user;

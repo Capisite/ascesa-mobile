@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
 
 class ConvenioCard extends StatefulWidget {
   final String brandName;
@@ -8,6 +8,7 @@ class ConvenioCard extends StatefulWidget {
   final String discount;
   final Color brandColor;
   final String? coverUrl;
+  final VoidCallback? onSeeOnMap;
 
   const ConvenioCard({
     super.key,
@@ -16,6 +17,7 @@ class ConvenioCard extends StatefulWidget {
     required this.discount,
     required this.brandColor,
     this.coverUrl,
+    this.onSeeOnMap,
   });
 
   @override
@@ -172,23 +174,47 @@ class _ConvenioCardState extends State<ConvenioCard> {
                     ],
                   ),
 
-                  // Styled Button
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.greenPrimary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: const Text(
-                      'Ver Desconto',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.greenPrimary,
+                  // Styled Button(s)
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.greenPrimary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: const Text(
+                            'Ver Desconto',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.greenPrimary,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      if (widget.onSeeOnMap != null) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: widget.onSeeOnMap,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.greenDark.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: const Icon(
+                              Icons.map_outlined,
+                              size: 16,
+                              color: AppColors.greenDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),

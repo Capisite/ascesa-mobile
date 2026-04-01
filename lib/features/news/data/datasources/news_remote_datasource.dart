@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_project/core/constants/api_constants.dart';
-import 'package:flutter_project/features/news/data/models/news_model.dart';
+import 'package:ascesa/core/constants/api_constants.dart';
+import 'package:ascesa/features/news/data/models/news_model.dart';
 
 class NewsRemoteDataSource {
   final Dio _dio;

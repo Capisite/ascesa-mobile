@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/core/theme/app_colors.dart';
-import 'package:flutter_project/features/news/presentation/pages/news_detail_page.dart';
+import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/features/news/presentation/pages/news_detail_page.dart';
 
 class NewsCard extends StatelessWidget {
   final String title;
@@ -23,8 +23,11 @@ class NewsCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                NewsDetailPage(title: title, date: date, imageUrl: imageUrl),
+            builder: (context) => NewsDetailPage(
+                title: title,
+                date: date,
+                imageUrl: imageUrl,
+                description: description),
           ),
         );
       },
