@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geofence_foreground_service/geofence_foreground_service.dart';
 import 'package:geofence_foreground_service/models/zone.dart';
@@ -15,15 +16,22 @@ class GeofencingService {
   }
 
   static Future<void> startService() async {
-    final bool isRunning = await _geofenceService.isForegroundServiceRunning();
-    
-    if (!isRunning) {
-      await _geofenceService.startGeofencingService(
-        notificationChannelId: 'geofence_notifications',
-        contentTitle: "Monitorando Parceiros",
-        contentText: "O Ascesa está monitorando benefícios próximos a você.",
-        callbackDispatcher: callbackDispatcher,
-      );
+    try {
+      final bool isRunning = await _geofenceService.isForegroundServiceRunning();
+      debugPrint("Geofencing service running: $isRunning");
+      
+      if (!isRunning) {
+        final bool started = await _geofenceService.startGeofencingService(
+          notificationChannelId: 'geofence_notifications',
+          contentTitle: "Monitorando Parceiros",
+          contentText: "O Ascesa está monitorando benefícios próximos a você.",
+          serviceId: 525600,
+          callbackDispatcher: callbackDispatcher,
+        );
+        debugPrint("Geofencing service started: $started");
+      }
+    } catch (e) {
+      debugPrint("Erro ao iniciar geofencing service: $e");
     }
   }
 
@@ -59,22 +67,34 @@ class GeofencingService {
           final lng = address.location!.coordinates[0];
           
           final zoneId = 'zone_${partner.id}_${address.nameUnit ?? registeredCount}';
-          debugPrint("Registrando zona: $zoneId (${partner.name})");
+          debugPrint("Registrando zona: $zoneId (${partner.name}) lat=$lat, lng=$lng");
           
-          final bool success = await _geofenceService.addGeofenceZone(
-            zone: Zone(
-              id: zoneId,
-              radius: 1000, 
-              coordinates: [
-                LatLng.degree(lat, lng),
-              ],
-            ),
-          );
+          try {
+            final bool success = await _geofenceService.addGeofenceZone(
+              zone: Zone(
+                id: zoneId,
+                radius: 1000, // 1km em metros
+                coordinates: [
+                  LatLng.degree(lat, lng),
+                ],
+                triggers: [
+                  GeofenceEventType.enter,
+                  GeofenceEventType.exit,
+                  GeofenceEventType.dwell,
+                ],
+                initialTrigger: GeofenceEventType.enter,
+                dwellLoiteringDelay: const Duration(minutes: 1),
+              ),
+            );
 
-          if (success) {
-            registeredCount++;
-          } else {
-            debugPrint("Falha ao registrar zona para: ${partner.name}");
+            if (success) {
+              registeredCount++;
+              debugPrint("Zona registrada com sucesso: $zoneId");
+            } else {
+              debugPrint("Falha ao registrar zona para: ${partner.name}");
+            }
+          } catch (e) {
+            debugPrint("Erro ao registrar zona $zoneId: $e");
           }
         }
       }
@@ -85,10 +105,15 @@ class GeofencingService {
 
 @pragma('vm:entry-point')
 void callbackDispatcher() async {
-  debugPrint("CALLBACK DISPATCHER INICIADO");
+  // ESSENCIAL: inicializar binding do Flutter no isolate de background
+  // Sem isso, plugins como flutter_local_notifications falham silenciosamente.
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  debugPrint("=== CALLBACK DISPATCHER INICIADO (background isolate) ===");
+  
   GeofenceForegroundService().handleTrigger(
     backgroundTriggerHandler: (zoneId, eventType) async {
-      debugPrint(">>> GATILHO DETECTADO EM BACKGROUND: ID=$zoneId, EVENTO=$eventType");
+      debugPrint(">>> GATILHO DETECTADO: ID=$zoneId, EVENTO=$eventType");
       
       if (eventType == GeofenceEventType.enter || eventType == GeofenceEventType.dwell) {
         debugPrint("ENTROU/PERMANECEU NA ZONA: $zoneId - EXIBINDO NOTIFICAÇÃO");
@@ -99,15 +124,17 @@ void callbackDispatcher() async {
           
           await NotificationService.showNotification(
             id: zoneId.hashCode,
-            title: "Parceiro Ascesa Próximo!",
+            title: "📍 Parceiro Ascesa Próximo!",
             body: "Você está perto de um local com benefícios exclusivos. Abra o app para conferir!",
           );
-          debugPrint("Notificação enviada com sucesso.");
-        } catch (e) {
+          debugPrint("Notificação enviada com sucesso para zona: $zoneId");
+        } catch (e, stackTrace) {
           debugPrint("Erro ao enviar notificação no background: $e");
+          debugPrint("StackTrace: $stackTrace");
         }
       }
-      return true;
+      return Future.value(true);
     },
   );
 }
+

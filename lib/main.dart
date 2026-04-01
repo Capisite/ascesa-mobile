@@ -12,13 +12,21 @@ void main() async {
   await GeofencingService.init();
 
   // Request mandatory permissions for background monitoring
-  // On Android, locationAlways MUST be requested AFTER base location is granted
-  await Permission.location.request();
-  await Permission.notification.request();
+  final locationStatus = await Permission.location.request();
+  final notificationStatus = await Permission.notification.request();
   
+  debugPrint("[Permissions] Location: $locationStatus");
+  debugPrint("[Permissions] Notification: $notificationStatus");
+  
+  // On Android, locationAlways MUST be requested AFTER base location is granted
   if (await Permission.location.isGranted) {
-    await Permission.locationAlways.request();
+    final alwaysStatus = await Permission.locationAlways.request();
+    debugPrint("[Permissions] LocationAlways: $alwaysStatus");
   }
+
+  // Solicita isenção de otimização de bateria — essencial para geofencing background
+  final batteryStatus = await Permission.ignoreBatteryOptimizations.request();
+  debugPrint("[Permissions] IgnoreBatteryOptimizations: $batteryStatus");
 
   runApp(const MyApp());
 }

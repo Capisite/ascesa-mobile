@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
 import 'package:ascesa/core/services/geofencing_service.dart';
+import 'package:ascesa/core/services/proximity_service.dart';
 
 class BenefitsController extends ChangeNotifier {
   final GetPartnersByCategoryUseCase getPartnersUseCase;
@@ -52,11 +53,18 @@ class BenefitsController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      // Register partners for geofencing (asynchronous, don't wait if it fails for UI purposes)
+      // Register partners for geofencing (background) + proximity (foreground)
       try {
         await GeofencingService.registerPartners(_allPartners);
       } catch (geofenceError) {
         debugPrint("Erro ao registrar geofencing: $geofenceError");
+      }
+
+      // Inicia o monitoramento de proximidade em foreground (mais confiável)
+      try {
+        ProximityService.instance.start(_allPartners);
+      } catch (proximityError) {
+        debugPrint("Erro ao iniciar proximity service: $proximityError");
       }
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
