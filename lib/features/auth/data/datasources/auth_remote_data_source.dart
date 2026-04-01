@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
 
 class AuthRemoteDataSource {
@@ -42,6 +43,25 @@ class AuthRemoteDataSource {
       throw Exception(e.response?.data['message'] ?? 'Erro ao realizar cadastro');
     } catch (e) {
       throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.forgotPasswordEndpoint,
+        data: {'email': email.trim().toLowerCase()},
+      );
+      
+      //debugPrint('[AuthRemoteDataSource] Resposta forgot-password: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 429) {
+        throw Exception('Muitas tentativas de recuperação. Tente novamente em alguns minutos.');
+      }
+      throw Exception(e.response?.data['message'] ?? 'Não foi possível enviar o e-mail de recuperação agora.');
+    } catch (e) {
+      throw Exception('Não foi possível enviar o e-mail de recuperação agora.');
     }
   }
 }

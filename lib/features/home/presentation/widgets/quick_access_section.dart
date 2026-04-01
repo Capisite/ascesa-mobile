@@ -84,7 +84,7 @@ class QuickAccessSection extends StatelessWidget {
                 return InkWell(
                   onTap: () {
                     if (onCategorySelected != null) {
-                      onCategorySelected!(cat.id);
+                      onCategorySelected!(cat.name);
                     }
                   },
                   borderRadius: BorderRadius.circular(16),

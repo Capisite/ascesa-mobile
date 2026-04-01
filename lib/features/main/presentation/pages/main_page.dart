@@ -87,8 +87,8 @@ class MainPageState extends State<MainPage> {
       HomePage(
         user: _currentUser,
         controller: _homeController,
-        onCategorySelected: (categoryId) {
-          _benefitsController.setFilter(categoryId);
+        onCategorySelected: (categoryName) {
+          _benefitsController.setFilter(categoryName);
           _onItemTapped(1); // Switch to Convenios tab
         },
       ),
@@ -153,8 +153,8 @@ class MainPageState extends State<MainPage> {
         _pages[0] = HomePage(
           user: _currentUser,
           controller: _homeController,
-          onCategorySelected: (categoryId) {
-            _benefitsController.setFilter(categoryId);
+          onCategorySelected: (categoryName) {
+            _benefitsController.setFilter(categoryName);
             _onItemTapped(1);
           },
         );
