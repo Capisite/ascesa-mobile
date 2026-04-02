@@ -3,7 +3,7 @@ import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/home/presentation/controllers/home_controller.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class QuickAccessSection extends StatelessWidget {
+class QuickAccessSection extends StatefulWidget {
   final HomeController controller;
   final Function(String)? onCategorySelected;
   
@@ -12,6 +12,13 @@ class QuickAccessSection extends StatelessWidget {
     required this.controller,
     this.onCategorySelected,
   });
+
+  @override
+  State<QuickAccessSection> createState() => _QuickAccessSectionState();
+}
+
+class _QuickAccessSectionState extends State<QuickAccessSection> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +35,9 @@ class QuickAccessSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ListenableBuilder(
-          listenable: controller,
+          listenable: widget.controller,
           builder: (context, child) {
-            if (controller.isLoading) {
+            if (widget.controller.isLoading) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
@@ -39,7 +46,7 @@ class QuickAccessSection extends StatelessWidget {
               );
             }
 
-            if (controller.errorMessage != null) {
+            if (widget.controller.errorMessage != null) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -48,12 +55,12 @@ class QuickAccessSection extends StatelessWidget {
                       const Icon(Icons.error_outline, color: Colors.red, size: 48),
                       const SizedBox(height: 8),
                       Text(
-                        controller.errorMessage!,
+                        widget.controller.errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.red),
                       ),
                       TextButton(
-                        onPressed: () => controller.fetchCategories(),
+                        onPressed: () => widget.controller.fetchCategories(),
                         child: const Text('Tentar novamente'),
                       ),
                     ],
@@ -62,10 +69,25 @@ class QuickAccessSection extends StatelessWidget {
               );
             }
 
-            final categories = controller.categories;
+            final categories = widget.controller.categories;
 
             if (categories.isEmpty) {
               return const Center(child: Text('Nenhuma categoria encontrada'));
+            }
+
+            // Lógica para limitar itens ou mostrar tudo
+            final int maxItemsBeforeExpanding = 8;
+            final bool canExpand = categories.length > maxItemsBeforeExpanding;
+            
+            List<dynamic> itemsToDisplay;
+            if (canExpand && !_isExpanded) {
+              // Mostra 7 categorias + Botão Ver Mais
+              itemsToDisplay = [...categories.take(maxItemsBeforeExpanding - 1), 'VER_MAIS'];
+            } else if (canExpand && _isExpanded) {
+              // Mostra todas + Botão Ver Menos
+              itemsToDisplay = [...categories, 'VER_MENOS'];
+            } else {
+              itemsToDisplay = categories;
             }
 
             return GridView.builder(
@@ -78,13 +100,24 @@ class QuickAccessSection extends StatelessWidget {
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
-              itemCount: categories.length,
+              itemCount: itemsToDisplay.length,
               itemBuilder: (context, index) {
-                final cat = categories[index];
+                final item = itemsToDisplay[index];
+
+                if (item == 'VER_MAIS' || item == 'VER_MENOS') {
+                  final isVerMais = item == 'VER_MAIS';
+                  return _buildActionButton(
+                    label: isVerMais ? 'VER MAIS' : 'VER MENOS',
+                    icon: isVerMais ? Icons.add : Icons.remove,
+                    onTap: () => setState(() => _isExpanded = isVerMais),
+                  );
+                }
+
+                final cat = item;
                 return InkWell(
                   onTap: () {
-                    if (onCategorySelected != null) {
-                      onCategorySelected!(cat.name);
+                    if (widget.onCategorySelected != null) {
+                      widget.onCategorySelected!(cat.name);
                     }
                   },
                   borderRadius: BorderRadius.circular(16),
@@ -93,13 +126,13 @@ class QuickAccessSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.bgLight,
+                          color: AppColors.greenDark,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: SvgPicture.network(
                           cat.image,
                           colorFilter: const ColorFilter.mode(
-                            AppColors.greenPrimary,
+                            Colors.white,
                             BlendMode.srcIn,
                           ),
                           placeholderBuilder: (context) => const SizedBox(
@@ -107,14 +140,14 @@ class QuickAccessSection extends StatelessWidget {
                             height: 28,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.greenPrimary,
+                              color: Colors.white,
                             ),
                           ),
                           width: 28,
                           height: 28,
                           errorBuilder: (context, error, stackTrace) => const Icon(
                             Icons.image_not_supported_outlined,
-                            color: AppColors.greenPrimary,
+                            color: Colors.white,
                             size: 28,
                           ),
                         ),
@@ -122,11 +155,11 @@ class QuickAccessSection extends StatelessWidget {
                       const SizedBox(height: 8),
                       Expanded(
                         child: Text(
-                          cat.name,
+                          cat.name.toUpperCase(),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
                             color: AppColors.textMuted,
                             height: 1.2,
                           ),
@@ -142,6 +175,52 @@ class QuickAccessSection extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.greenDark,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMuted,
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

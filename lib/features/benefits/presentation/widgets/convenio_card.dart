@@ -8,6 +8,7 @@ class ConvenioCard extends StatefulWidget {
   final String discount;
   final Color brandColor;
   final String? coverUrl;
+  final Future<void> Function()? onOpenDiscount;
   final VoidCallback? onSeeOnMap;
 
   const ConvenioCard({
@@ -17,6 +18,7 @@ class ConvenioCard extends StatefulWidget {
     required this.discount,
     required this.brandColor,
     this.coverUrl,
+    this.onOpenDiscount,
     this.onSeeOnMap,
   });
 
@@ -24,7 +26,7 @@ class ConvenioCard extends StatefulWidget {
   State<ConvenioCard> createState() => _ConvenioCardState();
 }
 
-class _ConvenioCardState extends State<ConvenioCard> {
+class _ConvenioCardState extends State<ConvenioCard> { 
   bool _isLandscape = true;
   bool _imageLoaded = false;
 
@@ -66,6 +68,20 @@ class _ConvenioCardState extends State<ConvenioCard> {
         }
       }),
     );
+  }
+
+  bool _isOpeningDiscount = false;
+
+  Future<void> _handleOpenDiscount() async {
+    if (widget.onOpenDiscount == null || _isOpeningDiscount) return;
+    setState(() => _isOpeningDiscount = true);
+    try {
+      await widget.onOpenDiscount!();
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningDiscount = false);
+      }
+    }
   }
 
   @override
@@ -179,20 +195,34 @@ class _ConvenioCardState extends State<ConvenioCard> {
                     children: [
                       Expanded(
                         flex: 3,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.greenPrimary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: const Text(
-                            'Ver Desconto',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.greenPrimary,
+                        child: GestureDetector(
+                          onTap: _handleOpenDiscount,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.greenPrimary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(24),
                             ),
+                            child: _isOpeningDiscount
+                                ? const SizedBox(
+                                    height: 14,
+                                    width: 14,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.greenPrimary,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Ver Desconto',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.greenPrimary,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

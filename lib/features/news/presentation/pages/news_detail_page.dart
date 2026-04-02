@@ -110,7 +110,7 @@ class NewsDetailPage extends StatelessWidget {
                   ? Image.network(
                       imageUrl,
                       width: double.infinity,
-                      height: 200,
+                      height: 450,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           _buildErrorPlaceholder(),
@@ -118,7 +118,7 @@ class NewsDetailPage extends StatelessWidget {
                   : Image.asset(
                       imageUrl,
                       width: double.infinity,
-                      height: 200,
+                      height: 450,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           _buildErrorPlaceholder(),

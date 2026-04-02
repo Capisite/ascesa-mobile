@@ -270,6 +270,9 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
                   discount: _selectedPartner!.title ?? 'Confira os benefícios',
                   brandColor: AppColors.greenPrimary,
                   coverUrl: _selectedPartner!.cover,
+                  onOpenDiscount: () => widget.benefitsController.openPartner(
+                    _selectedPartner!.id, context,
+                  ),
                 ),
               ),
             ),

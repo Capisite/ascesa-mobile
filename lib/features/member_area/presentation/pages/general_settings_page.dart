@@ -10,7 +10,6 @@ class GeneralSettingsPage extends StatefulWidget {
 }
 
 class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
-  bool _darkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -48,19 +47,7 @@ class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
             ),
             const SizedBox(height: 32),
             
-            _buildSectionTitle('Preferências'),
-            _buildToggleItem(
-              icon: Icons.dark_mode_outlined,
-              label: 'Modo Escuro',
-              value: _darkMode,
-              onChanged: (value) {
-                setState(() {
-                  _darkMode = value;
-                });
-              },
-            ),
-
-            const SizedBox(height: 32),
+            const SizedBox(height: 8),
             _buildSectionTitle('Sessão'),
             _buildLogoutItem(
               onTap: () {
@@ -88,51 +75,6 @@ class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
     );
   }
 
-  Widget _buildToggleItem({
-    required IconData icon,
-    required String label,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.greenPrimary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AppColors.greenPrimary, size: 22),
-        ),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.greenDark,
-          ),
-        ),
-        trailing: Switch.adaptive(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppColors.greenPrimary,
-        ),
-      ),
-    );
-  }
 
   Widget _buildLogoutItem({required VoidCallback onTap}) {
     return Container(

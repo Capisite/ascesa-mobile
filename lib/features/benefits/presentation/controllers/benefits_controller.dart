@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
+import 'package:ascesa/features/benefits/data/datasources/benefits_remote_data_source.dart';
 import 'package:ascesa/core/services/geofencing_service.dart';
 import 'package:ascesa/core/services/proximity_service.dart';
 
 class BenefitsController extends ChangeNotifier {
   final GetPartnersByCategoryUseCase getPartnersUseCase;
+  final BenefitsRemoteDataSource remoteDataSource;
 
   bool _isLoading = false;
   String? _errorMessage;
   List<Partner> _allPartners = [];
   String? _selectedCategoryName;
   String _searchQuery = '';
+  bool _hasPortalSessionHint = false;
 
-  BenefitsController({required this.getPartnersUseCase});
+  BenefitsController({
+    required this.getPartnersUseCase,
+    required this.remoteDataSource,
+  });
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -108,12 +115,55 @@ class BenefitsController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  /// Obtém a URL de acesso autenticado para um parceiro e abre no navegador.
+  /// Equivalente ao handleOpenPartner do front-end web.
+  Future<void> openPartner(String partnerId, BuildContext context) async {
+    try {
+      final result = await remoteDataSource.getPartnerAccess(
+        partnerId,
+        hasPortalSessionHint: _hasPortalSessionHint,
+      );
+
+      final String? url = result['url'];
+      final String? mode = result['mode'];
+
+      if (mode == 'DIRECT_LINK') {
+        _hasPortalSessionHint = true;
+      }
+
+      if (url != null && url.isNotEmpty) {
+        final uri = Uri.parse(url);
+        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Não foi possível abrir o link')),
+            );
+          }
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Link de desconto não disponível')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final message = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    }
+  }
   
   void reset() {
     _allPartners = [];
     _selectedCategoryName = null;
     _searchQuery = '';
     _errorMessage = null;
+    _hasPortalSessionHint = false;
     notifyListeners();
   }
 }

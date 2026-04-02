@@ -9,4 +9,7 @@ class ApiConstants {
   static const String partnersEndpoint = '/allya/partners';
   static const String newsEndpoint = '/news';
   static const String forgotPasswordEndpoint = '/auth/forgot-password';
+
+  static String partnerAccessEndpoint(String partnerId) =>
+      '/allya/partners/$partnerId/access';
 }

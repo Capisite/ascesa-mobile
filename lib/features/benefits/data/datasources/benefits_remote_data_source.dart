@@ -46,4 +46,25 @@ class BenefitsRemoteDataSource {
       throw Exception('Erro inesperado: $e');
     }
   }
+
+  /// Obtém a URL de acesso autenticado para um parceiro.
+  /// Equivalente ao accessAllyaPartner do front-end web.
+  Future<Map<String, dynamic>> getPartnerAccess(
+    String partnerId, {
+    required bool hasPortalSessionHint,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.partnerAccessEndpoint(partnerId),
+        data: {'hasPortalSessionHint': hasPortalSessionHint},
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Não foi possível abrir o convênio agora.',
+      );
+    } catch (e) {
+      throw Exception('Não foi possível abrir o convênio agora.');
+    }
+  }
 }

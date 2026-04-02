@@ -68,7 +68,10 @@ class MainPageState extends State<MainPage> {
       localDataSource: benefitsLocalDataSource,
     );
     final getPartnersUseCase = GetPartnersByCategoryUseCase(repository: benefitsRepository);
-    _benefitsController = BenefitsController(getPartnersUseCase: getPartnersUseCase);
+    _benefitsController = BenefitsController(
+      getPartnersUseCase: getPartnersUseCase,
+      remoteDataSource: benefitsRemoteDataSource,
+    );
     _benefitsController.fetchAllPartners();
 
     // Dependency Injection for User Profile
