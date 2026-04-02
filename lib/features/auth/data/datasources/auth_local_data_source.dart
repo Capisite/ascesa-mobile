@@ -16,7 +16,8 @@ class AuthLocalDataSource {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(_userKey);
     if (userJson != null) {
-      return User.fromJson(jsonDecode(userJson));
+      final map = jsonDecode(userJson);
+      return User.fromJson(Map<String, dynamic>.from(map));
     }
     return null;
   }
@@ -24,6 +25,10 @@ class AuthLocalDataSource {
   Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
+    await _biometricService.clearCredentials();
+  }
+
+  Future<void> clearCredentials() async {
     await _biometricService.clearCredentials();
   }
 

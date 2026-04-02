@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/auth/presentation/pages/register_page.dart';
 import 'package:ascesa/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:ascesa/features/home/presentation/widgets/virtual_id_card_dialog.dart';
+import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/main/presentation/pages/main_page.dart';
 import 'package:ascesa/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:ascesa/features/auth/domain/usecases/login_use_case.dart';
@@ -24,10 +26,11 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   
-  // Dependency Injection (Simplificada para este exemplo)
   late final AuthController _authController;
   final AuthLocalDataSource _localDataSource = AuthLocalDataSource();
   final BiometricService _biometricService = BiometricService();
+  User? _cachedUser;
+  bool _showFullForm = true;
 
   @override
   void initState() {
@@ -38,26 +41,26 @@ class _LoginPageState extends State<LoginPage> {
     _authController = AuthController(loginUseCase: loginUseCase);
     
     _authController.addListener(_onAuthStateChanged);
-    _checkBiometricLogin();
+    _checkInitialState();
   }
 
-  Future<void> _checkBiometricLogin() async {
+  Future<void> _checkInitialState() async {
     final enabled = await _localDataSource.isBiometricsEnabled();
+    final cachedUser = await _localDataSource.getUser();
+    final credentials = await _localDataSource.getCredentials();
+    
+    debugPrint('--- [DEBUG CACHE LOGIN] ---');
+    debugPrint('Biometrics enabled: $enabled');
+    debugPrint('CachedUser: ${cachedUser?.name} (is null? ${cachedUser == null})');
+    debugPrint('Credentials exists: ${credentials != null}');
+
     setState(() {
       _useBiometrics = enabled;
-    });
-
-    if (enabled) {
-      final credentials = await _localDataSource.getCredentials();
-      if (credentials != null) {
-        final authenticated = await _biometricService.authenticate();
-        if (authenticated) {
-          _emailController.text = credentials['email']!;
-          _passwordController.text = credentials['password']!;
-          _handleLogin(isBiometric: true);
-        }
+      _cachedUser = cachedUser;
+      if (cachedUser != null && credentials != null) {
+        _showFullForm = false;
       }
-    }
+    });
   }
 
   @override
@@ -80,20 +83,45 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleLogin({bool isBiometric = false}) async {
-    if (isBiometric || _formKey.currentState!.validate()) {
+  Future<void> _handleLogin() async {
+    if (_useBiometrics || !_showFullForm) {
+      final credentials = await _localDataSource.getCredentials();
+      if (credentials != null) {
+        if (!_showFullForm) {
+          // Se o formulário não está sendo exibido, faz o bypass da biometria
+          _emailController.text = credentials['email']!;
+          _passwordController.text = credentials['password']!;
+        } else if (_useBiometrics &&
+            ((_emailController.text.isEmpty && _passwordController.text.isEmpty) ||
+             (_emailController.text == credentials['email']))) {
+          // Exige biometria apenas se estiver mostrando o formulário e a opção estiver marcada
+          final authenticated = await _biometricService.authenticate();
+          if (authenticated) {
+            _emailController.text = credentials['email']!;
+            _passwordController.text = credentials['password']!;
+          } else {
+            return;
+          }
+        }
+      }
+    }
+
+    if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;
       
       final success = await _authController.login(email, password);
 
       if (success && mounted) {
+        // ALWAYS save user so it's available for the virtual ID card
+        await _localDataSource.saveUser(_authController.user!);
+
         if (_useBiometrics) {
           await _localDataSource.setBiometricsEnabled(true);
           await _localDataSource.saveCredentials(email, password);
         } else {
           await _localDataSource.setBiometricsEnabled(false);
-          await _localDataSource.clearUser(); // Limpa credenciais também
+          await _localDataSource.clearCredentials(); // Clear ONLY credentials, keep the user
         }
 
         Navigator.pushReplacement(
@@ -113,6 +141,18 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      floatingActionButton: _cachedUser != null
+          ? FloatingActionButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => VirtualIdCardDialog(user: _cachedUser!),
+                );
+              },
+              backgroundColor: AppColors.greenPrimary,
+              child: const Icon(Icons.badge, color: Colors.white),
+            )
+          : null,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
@@ -145,10 +185,13 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 48),
-              const Center(
+              Center(
                 child: Text(
-                  'Já é associado?',
-                  style: TextStyle(
+                  !_showFullForm && _cachedUser != null
+                      ? 'Bem-vindo(a) de volta,\n${_cachedUser!.name}!'
+                      : 'Já é associado?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
                     color: AppColors.greenDark, // Using a darker green
@@ -157,7 +200,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 32),
 
-              // Email Field
+              if (_showFullForm) ...[
+                // Email Field
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -273,6 +317,23 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const SizedBox(height: 32),
+              ],
+              
+              if (!_showFullForm) ...[
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showFullForm = true;
+                        _emailController.clear();
+                        _passwordController.clear();
+                      });
+                    },
+                    child: const Text('Entrar com outra conta', style: TextStyle(color: AppColors.greenPrimary)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Login Button
               ListenableBuilder(
