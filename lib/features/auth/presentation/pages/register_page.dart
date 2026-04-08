@@ -229,6 +229,33 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  String _translateError(String error) {
+    final lowerError = error.toLowerCase();
+    if (lowerError.contains('email already exists')) {
+      return 'Este e-mail já está cadastrado.';
+    }
+    if (lowerError.contains('cpf already exists')) {
+      return 'Este CPF já está cadastrado.';
+    }
+    if (lowerError.contains('registration number already exists')) {
+      return 'Esta matrícula já está cadastrada.';
+    }
+    if (lowerError.contains('error creating user')) {
+      return 'Ocorreu um erro ao criar sua conta.';
+    }
+    if (lowerError.contains('internal server error')) {
+      return 'Erro no servidor. Tente mais tarde.';
+    }
+    
+    // Remove default "Exception: " prefix and handle unknown errors
+    String cleanError = error.replaceAll('Exception: ', '');
+    if (cleanError.isEmpty || cleanError == 'null') {
+      return 'Ocorreu um erro inesperado. Tente novamente.';
+    }
+    
+    return cleanError;
+  }
+
   Future<void> _submitRegistration() async {
     if (!_termsConfirmed) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -293,7 +320,10 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          SnackBar(
+            content: Text(_translateError(e.toString())),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
