@@ -18,6 +18,8 @@ class User {
   final String? district;
   final String? city;
   final String? state;
+  final String? maritalStatus;
+  final String? gender;
 
   User({
     required this.id,
@@ -38,6 +40,8 @@ class User {
     this.district,
     this.city,
     this.state,
+    this.maritalStatus,
+    this.gender,
   });
 
   User copyWith({
@@ -59,6 +63,8 @@ class User {
     Object? district = _sentinel,
     Object? city = _sentinel,
     Object? state = _sentinel,
+    Object? maritalStatus = _sentinel,
+    Object? gender = _sentinel,
   }) {
     return User(
       id: id ?? this.id,
@@ -79,6 +85,8 @@ class User {
       district: district == _sentinel ? this.district : district as String?,
       city: city == _sentinel ? this.city : city as String?,
       state: state == _sentinel ? this.state : state as String?,
+      maritalStatus: maritalStatus == _sentinel ? this.maritalStatus : maritalStatus as String?,
+      gender: gender == _sentinel ? this.gender : gender as String?,
     );
   }
 
@@ -89,21 +97,23 @@ class User {
       id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
-      phone: json['phone'],
-      mobilePhone: json['mobilePhone'],
-      businessPhone: json['businessPhone'],
+      phone: json['phone'] ?? json['phone'],
+      mobilePhone: json['mobilePhone'] ?? json['mobile_phone'],
+      businessPhone: json['businessPhone'] ?? json['business_phone'],
       status: json['status'] ?? '',
       associate: json['associate'] ?? false,
       roles: List<String>.from(json['roles'] ?? []),
-      fatherName: json['fatherName'],
-      motherName: json['motherName'],
-      zipCode: json['zipCode'],
+      fatherName: json['fatherName'] ?? json['father_name'],
+      motherName: json['motherName'] ?? json['mother_name'],
+      zipCode: json['zipCode'] ?? json['zip_code'],
       street: json['street'],
-      addressNumber: json['addressNumber'],
-      addressComplement: json['addressComplement'],
+      addressNumber: json['addressNumber'] ?? json['address_number'],
+      addressComplement: json['addressComplement'] ?? json['address_complement'],
       district: json['district'],
       city: json['city'],
       state: json['state'],
+      maritalStatus: json['maritalStatus'] ?? json['marital_status'],
+      gender: json['gender'],
     );
   }
 
@@ -127,6 +137,8 @@ class User {
       'district': district,
       'city': city,
       'state': state,
+      'maritalStatus': maritalStatus,
+      'gender': gender,
     };
   }
 }

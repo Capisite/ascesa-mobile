@@ -167,6 +167,25 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  String _mapMaritalStatus(String? status) {
+    switch (status) {
+      case 'Solteiro(a)':
+        return 'SINGLE';
+      case 'Casado(a)':
+        return 'MARRIED';
+      case 'Divorciado(a)':
+        return 'DIVORCED';
+      case 'Viúvo(a)':
+        return 'WIDOWED';
+      case 'Separado(a)':
+        return 'SEPARATED';
+      case 'União estável':
+        return 'STABLE_UNION';
+      default:
+        return 'SINGLE';
+    }
+  }
+
   Future<void> _submitRegistration() async {
     if (!_termsConfirmed) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +214,7 @@ class _RegisterPageState extends State<RegisterPage> {
         'registrationNumber': _registrationNumberController.text,
         'phone': _mobilePhoneController.text.replaceAll(RegExp(r'\D'), ''),
         'gender': _mapGender(_selectedGender),
-        'maritalStatus': _selectedMaritalStatus,
+        'maritalStatus': _mapMaritalStatus(_selectedMaritalStatus),
         'companyName': _selectedCompany,
         'zipCode': _cepController.text.replaceAll(RegExp(r'\D'), ''),
         'street': _streetController.text,
@@ -396,10 +415,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   label: 'Estado Civil',
                   hintText: 'Selecione', // Reduced hint text
                   items: const [
-                    'Solteiro',
-                    'Casado',
-                    'Divorciado',
-                    'Viúvo',
+                    'Solteiro(a)',
+                    'Casado(a)',
+                    'Divorciado(a)',
+                    'Viúvo(a)',
+                    'Separado(a)',
+                    'União estável',
                   ],
                   value: _selectedMaritalStatus,
                   onChanged: (val) => setState(() => _selectedMaritalStatus = val),
