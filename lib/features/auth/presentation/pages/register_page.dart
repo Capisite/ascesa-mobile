@@ -412,7 +412,7 @@ class _RegisterPageState extends State<RegisterPage> {
           CustomDropdown(
             label: 'Empresa na qual Trabalha',
             hintText: 'Selecione um campo',
-            items: const ['Sicoob Banco', 'Sicoob Confederação', 'Outras'],
+            items: const ["Banco Sicoob", "Sicoob Confederação", "Cooperativas Centrais e Singulares do Sicoob", "Sicoob Seguradora", "Sicoob Administradora de Consórcio", "Sicoob DTVM", "Fundação Sicoob Previdência", "Sicoob Pagamentos", "Cooperativa do Sicoob(terceirizados)"],
             value: _selectedCompany,
             onChanged: (val) => setState(() => _selectedCompany = val),
           ),

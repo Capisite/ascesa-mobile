@@ -354,7 +354,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: DropdownButtonFormField<String>(
-                          value: _selectedState,
+                          initialValue: _selectedState,
                           decoration: InputDecoration(
                             labelText: 'Estado',
                             labelStyle: const TextStyle(color: AppColors.textMuted),
