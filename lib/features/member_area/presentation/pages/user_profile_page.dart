@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
 
 class UserProfilePage extends StatefulWidget {
   final UserProfileController controller;
-  
+
   const UserProfilePage({super.key, required this.controller});
 
   @override
@@ -14,30 +15,111 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
 
+  // Informações pessoais
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late TextEditingController _phoneController;
+  late TextEditingController _mobilePhoneController;
+  late TextEditingController _businessPhoneController;
+
+  // Filiação
   late TextEditingController _fatherNameController;
   late TextEditingController _motherNameController;
+
+  // Endereço
+  late TextEditingController _zipCodeController;
+  late TextEditingController _streetController;
+  late TextEditingController _addressNumberController;
+  late TextEditingController _addressComplementController;
+  late TextEditingController _districtController;
+  late TextEditingController _cityController;
+  String? _selectedState;
+
+  final List<String> _states = const [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+  ];
+
+  final _phoneFormatter = MaskTextInputFormatter(
+    mask: '(##) #####-####',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
+  final _phoneFormatterBusiness = MaskTextInputFormatter(
+    mask: '(##) ####-####',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
+  final _cepFormatter = MaskTextInputFormatter(
+    mask: '#####-###',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
 
   @override
   void initState() {
     super.initState();
-    final user = widget.controller.user;
+    _initControllers(widget.controller.user);
+    // Ouve o controller: quando fetchProfile terminar, atualiza os campos
+    widget.controller.addListener(_onUserUpdated);
+  }
+
+  void _initControllers(user) {
     _nameController = TextEditingController(text: user.name);
     _emailController = TextEditingController(text: user.email);
-    _phoneController = TextEditingController(text: user.phone ?? '');
+    _mobilePhoneController = TextEditingController(text: user.mobilePhone ?? user.phone ?? '');
+    _businessPhoneController = TextEditingController(text: user.businessPhone ?? '');
     _fatherNameController = TextEditingController(text: user.fatherName ?? '');
     _motherNameController = TextEditingController(text: user.motherName ?? '');
+    _zipCodeController = TextEditingController(text: user.zipCode ?? '');
+    _streetController = TextEditingController(text: user.street ?? '');
+    _addressNumberController = TextEditingController(text: user.addressNumber ?? '');
+    _addressComplementController = TextEditingController(text: user.addressComplement ?? '');
+    _districtController = TextEditingController(text: user.district ?? '');
+    _cityController = TextEditingController(text: user.city ?? '');
+    _selectedState = _validState(user.state);
   }
+
+  /// Retorna o estado somente se for um UF válido da lista, caso contrário null.
+  String? _validState(String? state) {
+    if (state == null) return null;
+    final upper = state.toUpperCase();
+    return _states.contains(upper) ? upper : null;
+  }
+
+  void _onUserUpdated() {
+    // Só atualiza os campos se não estiver carregando mais (fetch concluído)
+    if (!widget.controller.isLoading) {
+      final user = widget.controller.user;
+      _nameController.text = user.name;
+      _emailController.text = user.email;
+      _mobilePhoneController.text = user.mobilePhone ?? user.phone ?? '';
+      _businessPhoneController.text = user.businessPhone ?? '';
+      _fatherNameController.text = user.fatherName ?? '';
+      _motherNameController.text = user.motherName ?? '';
+      _zipCodeController.text = user.zipCode ?? '';
+      _streetController.text = user.street ?? '';
+      _addressNumberController.text = user.addressNumber ?? '';
+      _addressComplementController.text = user.addressComplement ?? '';
+      _districtController.text = user.district ?? '';
+      _cityController.text = user.city ?? '';
+      if (mounted) setState(() => _selectedState = _validState(user.state));
+    }
+  }
+
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onUserUpdated);
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
+    _mobilePhoneController.dispose();
+    _businessPhoneController.dispose();
     _fatherNameController.dispose();
     _motherNameController.dispose();
+    _zipCodeController.dispose();
+    _streetController.dispose();
+    _addressNumberController.dispose();
+    _addressComplementController.dispose();
+    _districtController.dispose();
+    _cityController.dispose();
     super.dispose();
   }
 
@@ -46,9 +128,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
       await widget.controller.updateProfile(
         name: _nameController.text,
         email: _emailController.text,
-        phone: _phoneController.text,
+        mobilePhone: _mobilePhoneController.text.replaceAll(RegExp(r'\D'), ''),
+        businessPhone: _businessPhoneController.text.replaceAll(RegExp(r'\D'), ''),
         fatherName: _fatherNameController.text,
         motherName: _motherNameController.text,
+        zipCode: _zipCodeController.text.replaceAll(RegExp(r'\D'), ''),
+        street: _streetController.text,
+        addressNumber: _addressNumberController.text,
+        addressComplement: _addressComplementController.text,
+        district: _districtController.text,
+        city: _cityController.text,
+        state: _selectedState,
       );
 
       if (mounted) {
@@ -66,7 +156,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
               backgroundColor: AppColors.greenPrimary,
             ),
           );
-          // Optional: Navigator.pop(context);
         }
       }
     }
@@ -78,7 +167,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       listenable: widget.controller,
       builder: (context, _) {
         final isLoading = widget.controller.isLoading;
-        
+
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
@@ -137,11 +226,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
+                      // ── Informações Pessoais ──
                       _buildSectionTitle('Informações Pessoais'),
                       _buildTextField(
-                        label: 'Nome',
+                        label: 'Nome completo',
                         controller: _nameController,
                         icon: Icons.person_outline,
                         validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
@@ -153,14 +243,46 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         keyboardType: TextInputType.emailAddress,
                         validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
                       ),
-                      _buildTextField(
-                        label: 'Telefone',
-                        controller: _phoneController,
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              label: 'Tel. Celular',
+                              controller: _mobilePhoneController,
+                              icon: Icons.phone_android_outlined,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [_phoneFormatter],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              label: 'Tel. Comercial',
+                              controller: _businessPhoneController,
+                              icon: Icons.phone_outlined,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [_phoneFormatterBusiness],
+                            ),
+                          ),
+                        ],
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
+                      // ── Documentos (bloqueados) ──
+                      _buildSectionTitle('Documentos'),
+                      _buildLockedField(
+                        label: 'CPF',
+                        value: '***.***.***-**',
+                        icon: Icons.badge_outlined,
+                      ),
+                      _buildLockedField(
+                        label: 'RG',
+                        value: '**.***.***-*',
+                        icon: Icons.card_membership_outlined,
+                      ),
+
+                      const SizedBox(height: 8),
+                      // ── Filiação ──
                       _buildSectionTitle('Filiação'),
                       _buildTextField(
                         label: 'Nome do Pai',
@@ -173,20 +295,82 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         icon: Icons.woman_outlined,
                       ),
 
-                      const SizedBox(height: 24),
-                      _buildSectionTitle('Documentos e Endereço (Bloqueados)'),
-                      _buildLockedField(
-                        label: 'CPF',
-                        value: '***.***.***-**',
-                        icon: Icons.badge_outlined,
+                      const SizedBox(height: 8),
+                      // ── Endereço ──
+                      _buildSectionTitle('Endereço'),
+                      _buildTextField(
+                        label: 'CEP',
+                        controller: _zipCodeController,
+                        icon: Icons.location_on_outlined,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [_cepFormatter],
                       ),
-                      _buildLockedField(
-                        label: 'RG',
-                        value: '**.***.***-*',
-                        icon: Icons.card_membership_outlined,
+                      _buildTextField(
+                        label: 'Rua / Logradouro',
+                        controller: _streetController,
+                        icon: Icons.signpost_outlined,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: _buildTextField(
+                              label: 'Número',
+                              controller: _addressNumberController,
+                              icon: Icons.house_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: _buildTextField(
+                              label: 'Complemento',
+                              controller: _addressComplementController,
+                              icon: Icons.add_road_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              label: 'Bairro',
+                              controller: _districtController,
+                              icon: Icons.holiday_village_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              label: 'Cidade',
+                              controller: _cityController,
+                              icon: Icons.location_city_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Estado dropdown
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedState,
+                          decoration: InputDecoration(
+                            labelText: 'Estado',
+                            labelStyle: const TextStyle(color: AppColors.textMuted),
+                            prefixIcon: const Icon(Icons.map_outlined, color: AppColors.greenPrimary, size: 22),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.greenPrimary, width: 2)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                          items: _states.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                          onChanged: (val) => setState(() => _selectedState = val),
+                          style: const TextStyle(fontSize: 15, color: AppColors.greenDark),
+                        ),
                       ),
 
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 32),
                       SizedBox(
                         width: double.infinity,
                         height: 54,
@@ -259,6 +443,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    List<dynamic>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -266,6 +451,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
         controller: controller,
         keyboardType: keyboardType,
         validator: validator,
+        inputFormatters: inputFormatters != null
+            ? inputFormatters.cast()
+            : null,
         style: const TextStyle(fontSize: 15, color: AppColors.greenDark),
         decoration: InputDecoration(
           labelText: label,
@@ -311,10 +499,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textLight),
-                  ),
+                  Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textLight)),
                   const SizedBox(height: 2),
                   Text(
                     value,
@@ -334,3 +519,4 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 }
+

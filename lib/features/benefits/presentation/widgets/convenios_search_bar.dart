@@ -86,10 +86,6 @@ class _ConveniosSearchBarState extends State<ConveniosSearchBar> {
             color: AppColors.border,
             margin: const EdgeInsets.symmetric(horizontal: 8),
           ),
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, color: AppColors.greenPrimary),
-            onPressed: () {},
-          ),
         ],
       ),
     );

@@ -26,6 +26,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
   final MapController _mapController = MapController();
   List<Marker> _markers = [];
   Partner? _selectedPartner;
+  PartnerAddress? _selectedAddress;
   LatLng? _currentUserPosition;
   StreamSubscription<Position>? _positionSubscription;
 
@@ -151,6 +152,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
                 onTap: () {
                   setState(() {
                     _selectedPartner = partner;
+                    _selectedAddress = address;
                   });
                 },
                 child: const Icon(
@@ -195,12 +197,12 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.greenDark),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'my_location',
-        onPressed: _onMyLocationPressed,
-        backgroundColor: const Color(0xFF1B5E20),
-        child: const Icon(Icons.my_location, color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.my_location, color: AppColors.greenDark),
+            onPressed: _onMyLocationPressed,
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -212,6 +214,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
               onTap: (_, __) {
                 setState(() {
                   _selectedPartner = null;
+                  _selectedAddress = null;
                 });
               },
             ),
@@ -269,7 +272,8 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
                   category: _selectedPartner!.categoryName ?? 'Parceiro',
                   discount: _selectedPartner!.title ?? 'Confira os benefícios',
                   brandColor: AppColors.greenPrimary,
-                  coverUrl: _selectedPartner!.cover,
+                  logoUrl: _selectedPartner!.logoUrl,
+                  address: _formatAddress(_selectedAddress),
                   onOpenDiscount: () => widget.benefitsController.openPartner(
                     _selectedPartner!.id, context,
                   ),
@@ -279,6 +283,29 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         ],
       ),
     );
+  }
+
+  String _formatAddress(PartnerAddress? address) {
+    if (address == null) return '';
+    final List<String> parts = [];
+    if (address.street != null && address.street!.isNotEmpty) {
+      String streetPart = address.street!;
+      if (address.number != null && address.number!.isNotEmpty) {
+        streetPart += ', ${address.number}';
+      }
+      parts.add(streetPart);
+    }
+    if (address.neighborhood != null && address.neighborhood!.isNotEmpty) {
+      parts.add(address.neighborhood!);
+    }
+    if (address.county != null && address.county!.isNotEmpty) {
+      String cityPart = address.county!;
+      if (address.state != null && address.state!.isNotEmpty) {
+        cityPart += ' / ${address.state}';
+      }
+      parts.add(cityPart);
+    }
+    return parts.join(' - ');
   }
 }
 

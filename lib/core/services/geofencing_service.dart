@@ -73,7 +73,7 @@ class GeofencingService {
             final bool success = await _geofenceService.addGeofenceZone(
               zone: Zone(
                 id: zoneId,
-                radius: 1000, // 1km em metros
+                radius: 100, // 100 metros
                 coordinates: [
                   LatLng.degree(lat, lng),
                 ],

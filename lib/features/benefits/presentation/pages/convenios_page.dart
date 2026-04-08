@@ -142,7 +142,7 @@ class ConveniosPage extends StatelessWidget {
                               category: partner.categoryName ?? '',
                               discount: partner.title ?? '',
                               brandColor: brandColor,
-                              coverUrl: partner.cover,
+                              logoUrl: partner.logoUrl,
                               onOpenDiscount: () => benefitsController.openPartner(partner.id, context),
                               onSeeOnMap: () {
                                 Navigator.push(

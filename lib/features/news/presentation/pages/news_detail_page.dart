@@ -50,15 +50,6 @@ class NewsDetailPage extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                'COMUNICADO OFICIAL',
-                style: TextStyle(
-                  color: AppColors.greenPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
             ),
             const SizedBox(height: 24),
 

@@ -7,7 +7,8 @@ class ConvenioCard extends StatefulWidget {
   final String category;
   final String discount;
   final Color brandColor;
-  final String? coverUrl;
+  final String? logoUrl;
+  final String? address;
   final Future<void> Function()? onOpenDiscount;
   final VoidCallback? onSeeOnMap;
 
@@ -17,7 +18,8 @@ class ConvenioCard extends StatefulWidget {
     required this.category,
     required this.discount,
     required this.brandColor,
-    this.coverUrl,
+    this.logoUrl,
+    this.address,
     this.onOpenDiscount,
     this.onSeeOnMap,
   });
@@ -27,7 +29,6 @@ class ConvenioCard extends StatefulWidget {
 }
 
 class _ConvenioCardState extends State<ConvenioCard> { 
-  bool _isLandscape = true;
   bool _imageLoaded = false;
 
   @override
@@ -39,30 +40,26 @@ class _ConvenioCardState extends State<ConvenioCard> {
   @override
   void didUpdateWidget(ConvenioCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.coverUrl != oldWidget.coverUrl) {
+    if (widget.logoUrl != oldWidget.logoUrl) {
       _loadImageInfo();
     }
   }
 
   void _loadImageInfo() {
-    if (widget.coverUrl == null || widget.coverUrl!.isEmpty) {
+    if (widget.logoUrl == null || widget.logoUrl!.isEmpty) {
       setState(() {
         _imageLoaded = false;
       });
       return;
     }
 
-    final image = NetworkImage(widget.coverUrl!);
+    final image = NetworkImage(widget.logoUrl!);
     final stream = image.resolve(const ImageConfiguration());
     
     stream.addListener(
       ImageStreamListener((ImageInfo info, bool synchronousCall) {
         if (mounted) {
-          final double aspectRatio = info.image.width / info.image.height;
           setState(() {
-            // Se for muito wide (landscape), usamos BoxFit.cover
-            // Se for quadrada ou vertical (logo), usamos BoxFit.contain no híbrido
-            _isLandscape = aspectRatio > 1.2 && info.image.width > 300;
             _imageLoaded = true;
           });
         }
@@ -115,11 +112,11 @@ class _ConvenioCardState extends State<ConvenioCard> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: widget.coverUrl != null && widget.coverUrl!.isNotEmpty
-                      ? AppColors.bgLight
+                  color: widget.logoUrl != null && widget.logoUrl!.isNotEmpty
+                      ? Colors.white
                       : null,
                   gradient:
-                      (widget.coverUrl == null || widget.coverUrl!.isEmpty)
+                      (widget.logoUrl == null || widget.logoUrl!.isEmpty)
                           ? LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -187,6 +184,19 @@ class _ConvenioCardState extends State<ConvenioCard> {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
+                      if (widget.address != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.address!,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ],
                   ),
 
@@ -256,7 +266,7 @@ class _ConvenioCardState extends State<ConvenioCard> {
   }
 
   Widget _buildHeaderContent() {
-    if (widget.coverUrl == null || widget.coverUrl!.isEmpty) {
+    if (widget.logoUrl == null || widget.logoUrl!.isEmpty) {
       return _buildBrandFallback();
     }
 
@@ -273,40 +283,14 @@ class _ConvenioCardState extends State<ConvenioCard> {
       );
     }
 
-    // Se for Landscape e grande, mantemos o preenchimento total
-    if (_isLandscape) {
-      return Image.network(
-        widget.coverUrl!,
-        fit: BoxFit.cover,
-        color: Colors.black.withValues(alpha: 0.15),
-        colorBlendMode: BlendMode.darken,
-      );
-    }
-
-    // Para imagens pequenas ou verticais: Cabeçalho Híbrido (Blur + Contain)
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Fundo desfocado
-        Image.network(
-          widget.coverUrl!,
-          fit: BoxFit.cover,
-        ),
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-        // Imagem centralizada sem cortes
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.network(
-            widget.coverUrl!,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ],
+    // Logo Display: clean, centered and padded
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Image.network(
+        widget.logoUrl!,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => _buildBrandFallback(),
+      ),
     );
   }
 

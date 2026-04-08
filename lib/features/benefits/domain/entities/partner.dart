@@ -3,8 +3,8 @@ class Partner {
   final String name;
   final String slug;
   final String? portalPartnerUrl;
-  final String? logo;
-  final String? cover;
+  final String? logoUrl;
+  final String? coverUrl;
   final String? categoryName;
   final String? title;
   final String? about;
@@ -18,8 +18,8 @@ class Partner {
     required this.name,
     required this.slug,
     this.portalPartnerUrl,
-    this.logo,
-    this.cover,
+    this.logoUrl,
+    this.coverUrl,
     this.categoryName,
     this.title,
     this.about,

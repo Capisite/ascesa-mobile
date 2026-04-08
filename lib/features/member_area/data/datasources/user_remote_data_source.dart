@@ -18,6 +18,17 @@ class UserRemoteDataSource {
     ),
   );
 
+  Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final response = await _dio.get(ApiConstants.updateUserEndpoint);
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Erro ao buscar perfil');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData) async {
     try {
       final response = await _dio.patch(

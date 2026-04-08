@@ -25,7 +25,7 @@ class ProximityService {
   static const Duration _cooldownDuration = Duration(minutes: 30);
   
   // Raio de proximidade em metros
-  static const double _proximityRadiusMeters = 1000.0;
+  static const double _proximityRadiusMeters = 100.0;
   
   bool _isRunning = false;
   bool get isRunning => _isRunning;

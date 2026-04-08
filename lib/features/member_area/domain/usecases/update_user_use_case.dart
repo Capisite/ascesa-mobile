@@ -8,15 +8,25 @@ class UpdateUserUseCase {
 
   Future<User> execute(User user) async {
     final response = await dataSource.updateProfile(user.toJson());
-    
-    // The API should return the updated user. We update our local entity.
-    // Assuming the response body contains the updated user data.
+
+    // The backend wraps the updated user in a 'user' key
+    final userData = response['user'] ?? response;
+
     return user.copyWith(
-      name: response['name'],
-      email: response['email'],
-      phone: response['phone'],
-      fatherName: response['fatherName'],
-      motherName: response['motherName'],
+      name: userData['name'],
+      email: userData['email'],
+      phone: userData['phone'],
+      mobilePhone: userData['mobilePhone'],
+      businessPhone: userData['businessPhone'],
+      fatherName: userData['fatherName'],
+      motherName: userData['motherName'],
+      zipCode: userData['zipCode'],
+      street: userData['street'],
+      addressNumber: userData['addressNumber'],
+      addressComplement: userData['addressComplement'],
+      district: userData['district'],
+      city: userData['city'],
+      state: userData['state'],
     );
   }
 }

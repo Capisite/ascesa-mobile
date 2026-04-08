@@ -23,6 +23,7 @@ import 'package:ascesa/features/home/data/datasources/home_remote_data_source.da
 import 'package:ascesa/features/home/data/datasources/home_local_data_source.dart';
 import 'package:ascesa/features/member_area/data/datasources/user_remote_data_source.dart';
 import 'package:ascesa/features/member_area/domain/usecases/update_user_use_case.dart';
+import 'package:ascesa/features/member_area/domain/usecases/get_user_profile_use_case.dart';
 import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
 import 'package:ascesa/features/auth/data/datasources/auth_local_data_source.dart';
 
@@ -78,13 +79,16 @@ class MainPageState extends State<MainPage> {
     final userRemoteDataSource = UserRemoteDataSource(token: widget.token);
     final authLocalDataSource = AuthLocalDataSource();
     final updateUserUseCase = UpdateUserUseCase(dataSource: userRemoteDataSource);
+    final getUserProfileUseCase = GetUserProfileUseCase(dataSource: userRemoteDataSource);
     _userProfileController = UserProfileController(
       updateUserUseCase: updateUserUseCase,
+      getUserProfileUseCase: getUserProfileUseCase,
       authLocalDataSource: authLocalDataSource,
       user: _currentUser,
     );
 
     _userProfileController.addListener(_onUserProfileUpdated);
+    _userProfileController.fetchProfile();
 
     _pages = [
       HomePage(
