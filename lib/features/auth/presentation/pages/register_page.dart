@@ -4,6 +4,7 @@ import 'package:ascesa/features/auth/presentation/widgets/custom_text_field.dart
 import 'package:ascesa/features/auth/presentation/widgets/custom_dropdown.dart';
 import 'package:ascesa/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:dio/dio.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -95,7 +96,49 @@ class _RegisterPageState extends State<RegisterPage> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    _cepController.addListener(_onCepChanged);
+  }
+
+  void _onCepChanged() {
+    final cep = _cepController.text.replaceAll(RegExp(r'\D'), '');
+    if (cep.length == 8) {
+      _searchCep();
+    }
+  }
+
+  Future<void> _searchCep() async {
+    final cep = _cepController.text.replaceAll(RegExp(r'\D'), '');
+    if (cep.length != 8) return;
+
+    try {
+      final dio = Dio();
+      final response = await dio.get('https://viacep.com.br/ws/$cep/json/');
+
+      if (response.data != null && response.data['erro'] != true) {
+        setState(() {
+          _streetController.text = response.data['logradouro'] ?? '';
+          _districtController.text = response.data['bairro'] ?? '';
+          _cityController.text = response.data['localidade'] ?? '';
+          final uf = response.data['uf'];
+          if (_states.contains(uf)) {
+            _selectedState = uf;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao buscar CEP. Verifique sua conexão.')),
+        );
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    _cepController.removeListener(_onCepChanged);
     _pageController.dispose();
     _nameController.dispose();
     _cpfController.dispose();
@@ -466,10 +509,13 @@ class _RegisterPageState extends State<RegisterPage> {
           CustomTextField(
             label: 'CEP',
             hintText: '00000-000',
-            suffixIcon: const Icon(
-              Icons.search,
-              color: AppColors.textLight,
-              size: 18,
+            suffixIcon: IconButton(
+              icon: const Icon(
+                Icons.search,
+                color: AppColors.textLight,
+                size: 18,
+              ),
+              onPressed: _searchCep,
             ), // Reduced icon size
             keyboardType: TextInputType.number,
             inputFormatters: [_cepFormatter],
