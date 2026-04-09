@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:ascesa/core/services/notification_service.dart';
+import 'package:ascesa/core/services/geofencing_service.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 
 /// Serviço de proximidade em foreground.
@@ -52,6 +53,12 @@ class ProximityService {
     ).listen(
       (Position position) {
         _checkProximity(position.latitude, position.longitude);
+        
+        // Verifica se precisa atualizar a lista de 20 geofences mais próximos
+        if (GeofencingService.shouldUpdateGeofences(position)) {
+          debugPrint("[ProximityService] Movimento detectado. Atualizando top 20 geofences.");
+          GeofencingService.registerPartners(_partners, userPosition: position);
+        }
       },
       onError: (error) {
         debugPrint("[ProximityService] Erro no stream de localização: $error");

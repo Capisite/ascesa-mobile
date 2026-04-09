@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
 import 'package:ascesa/features/benefits/data/datasources/benefits_remote_data_source.dart';
@@ -62,7 +63,14 @@ class BenefitsController extends ChangeNotifier {
 
       // Register partners for geofencing (background) + proximity (foreground)
       try {
-        await GeofencingService.registerPartners(_allPartners);
+        Position? currentPosition;
+        try {
+          currentPosition = await Geolocator.getCurrentPosition();
+        } catch (e) {
+          debugPrint("Erro ao obter localização atual para geofencing: $e");
+        }
+        
+        await GeofencingService.registerPartners(_allPartners, userPosition: currentPosition);
       } catch (geofenceError) {
         debugPrint("Erro ao registrar geofencing: $geofenceError");
       }

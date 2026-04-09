@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/core/services/settings_service.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
 import 'package:ascesa/features/benefits/presentation/widgets/convenio_card.dart';
@@ -22,13 +23,31 @@ class BenefitsMapPage extends StatefulWidget {
   State<BenefitsMapPage> createState() => _BenefitsMapPageState();
 }
 
+class _PartnerAddressWithDistance {
+  final Partner partner;
+  final PartnerAddress address;
+  final double distance;
+  final double lat;
+  final double lng;
+
+  _PartnerAddressWithDistance({
+    required this.partner,
+    required this.address,
+    required this.distance,
+    required this.lat,
+    required this.lng,
+  });
+}
+
 class _BenefitsMapPageState extends State<BenefitsMapPage> {
   final MapController _mapController = MapController();
+  final SettingsService _settingsService = SettingsService();
   List<Marker> _markers = [];
   Partner? _selectedPartner;
   PartnerAddress? _selectedAddress;
   LatLng? _currentUserPosition;
   StreamSubscription<Position>? _positionSubscription;
+  bool _isPerformanceModeEnabled = false;
 
   static const LatLng _initialPosition = LatLng(-15.7942, -47.8822); // Brasília default
 
@@ -38,8 +57,13 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     if (widget.initialPartner != null) {
       _selectedPartner = widget.initialPartner;
     }
+    _loadSettingsAndMarkers();
     _determineInitialPosition();
     _initLocationStream();
+  }
+
+  Future<void> _loadSettingsAndMarkers() async {
+    _isPerformanceModeEnabled = await _settingsService.isPerformanceModeEnabled();
     _loadMarkers();
   }
 
@@ -81,15 +105,16 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     if (permission == LocationPermission.deniedForever) return;
     
     final lastKnown = await Geolocator.getLastKnownPosition();
-    if (lastKnown != null && mounted) {
-      final pos = LatLng(lastKnown.latitude, lastKnown.longitude);
-      setState(() {
-        _currentUserPosition = pos;
-      });
-      if (widget.initialPartner == null) {
-        _mapController.move(pos, 14.0);
+      if (lastKnown != null && mounted) {
+        final pos = LatLng(lastKnown.latitude, lastKnown.longitude);
+        setState(() {
+          _currentUserPosition = pos;
+        });
+        _loadMarkers();
+        if (widget.initialPartner == null) {
+          _mapController.move(pos, 14.0);
+        }
       }
-    }
 
     try {
       final position = await Geolocator.getCurrentPosition(
@@ -104,6 +129,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         setState(() {
           _currentUserPosition = pos;
         });
+        _loadMarkers();
         if (widget.initialPartner == null) {
           _mapController.move(pos, 14.0);
         }
@@ -125,6 +151,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         setState(() {
           _currentUserPosition = newPos;
         });
+        _loadMarkers();
         // Auto-follow: only if no partner is initially selected or we aren't in "selection mode"
         if (widget.initialPartner == null) {
           _mapController.move(newPos, _mapController.camera.zoom);
@@ -134,35 +161,56 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
   }
 
   void _loadMarkers() {
-    final partners = widget.benefitsController.partners;
+    List<Partner> partners = widget.benefitsController.partners;
     final List<Marker> newMarkers = [];
 
-    for (var partner in partners) {
-      for (var address in partner.addressess) {
-        if (address.location != null && address.location!.coordinates.length >= 2) {
-          final lat = address.location!.coordinates[1];
-          final lng = address.location!.coordinates[0];
+    // Se o modo de performance estiver ativado e tivermos a localização do usuário,
+    // filtramos pelos 20 mais próximos.
+    if (_isPerformanceModeEnabled && _currentUserPosition != null) {
+      // Cria uma lista flat de endereços para ordenar por distância
+      List<_PartnerAddressWithDistance> sortedList = [];
+      
+      for (var partner in partners) {
+        for (var address in partner.addressess) {
+          if (address.location != null && address.location!.coordinates.length >= 2) {
+            final lat = address.location!.coordinates[1];
+            final lng = address.location!.coordinates[0];
+            
+            final distance = Geolocator.distanceBetween(
+              _currentUserPosition!.latitude,
+              _currentUserPosition!.longitude,
+              lat,
+              lng,
+            );
+            
+            sortedList.add(_PartnerAddressWithDistance(
+              partner: partner,
+              address: address,
+              distance: distance,
+              lat: lat,
+              lng: lng,
+            ));
+          }
+        }
+      }
 
-          newMarkers.add(
-            Marker(
-              point: LatLng(lat, lng),
-              width: 40,
-              height: 40,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedPartner = partner;
-                    _selectedAddress = address;
-                  });
-                },
-                child: const Icon(
-                  Icons.location_on,
-                  color: AppColors.greenPrimary,
-                  size: 40,
-                ),
-              ),
-            ),
-          );
+      sortedList.sort((a, b) => a.distance.compareTo(b.distance));
+      
+      // Pega os 20 mais próximos
+      final top20 = sortedList.take(20).toList();
+      
+      for (var item in top20) {
+        newMarkers.add(_buildMarker(item.partner, item.address, item.lat, item.lng));
+      }
+    } else {
+      // Modo normal ou sem localização: renderiza todos
+      for (var partner in partners) {
+        for (var address in partner.addressess) {
+          if (address.location != null && address.location!.coordinates.length >= 2) {
+            final lat = address.location!.coordinates[1];
+            final lng = address.location!.coordinates[0];
+            newMarkers.add(_buildMarker(partner, address, lat, lng));
+          }
         }
       }
     }
@@ -170,6 +218,27 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     setState(() {
       _markers = newMarkers;
     });
+  }
+
+  Marker _buildMarker(Partner partner, PartnerAddress address, double lat, double lng) {
+    return Marker(
+      point: LatLng(lat, lng),
+      width: 40,
+      height: 40,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedPartner = partner;
+            _selectedAddress = address;
+          });
+        },
+        child: const Icon(
+          Icons.location_on,
+          color: AppColors.greenPrimary,
+          size: 40,
+        ),
+      ),
+    );
   }
 
   void _onMyLocationPressed() {

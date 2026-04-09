@@ -5,11 +5,19 @@ import 'package:geofence_foreground_service/models/zone.dart';
 import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:latlng/latlng.dart';
 import 'package:ascesa/core/services/notification_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 
 class GeofencingService {
   static final GeofenceForegroundService _geofenceService =
       GeofenceForegroundService();
+
+  static Position? _lastRegistrationPosition;
+  
+  // Limite recomendado para iOS e melhor performance de bateria
+  static const int maxGeofences = 20;
+  // Distância em metros para considerar uma "viagem longa" e atualizar a lista
+  static const double movementThresholdMeters = 5000; 
 
   static Future<void> init() async {
     // Initial setup if needed, but startGeofencingService handles most of it.
@@ -35,7 +43,21 @@ class GeofencingService {
     }
   }
 
-  static Future<void> registerPartners(List<Partner> partners) async {
+  /// Verifica se o usuário se moveu o suficiente para atualizar a lista de geofences.
+  static bool shouldUpdateGeofences(Position currentPosition) {
+    if (_lastRegistrationPosition == null) return true;
+
+    final distance = Geolocator.distanceBetween(
+      _lastRegistrationPosition!.latitude,
+      _lastRegistrationPosition!.longitude,
+      currentPosition.latitude,
+      currentPosition.longitude,
+    );
+
+    return distance >= movementThresholdMeters;
+  }
+
+  static Future<void> registerPartners(List<Partner> partners, {Position? userPosition}) async {
     // Garantir que o serviço está rodando antes de adicionar zonas
     await startService();
 
@@ -47,60 +69,108 @@ class GeofencingService {
       debugPrint("Erro ao remover zonas: $e");
     }
     
-    // O sistema operacional limita a exatamente 100 geofences TOTAL por app.
-    int registeredCount = 0;
-    const int maxGeofences = 100;
+    _lastRegistrationPosition = userPosition;
 
     if (partners.isEmpty) {
       debugPrint("Nenhum parceiro para registrar.");
       return;
     }
 
+    // ACHATAR E FILTRAR: Criar lista de todos os endereços com geolocalização válida
+    List<_AddressWithDistance> allAddresses = [];
     for (var partner in partners) {
-      if (registeredCount >= maxGeofences) break;
-
       for (var address in partner.addressess) {
-        if (registeredCount >= maxGeofences) break;
-
         if (address.location != null && address.location!.coordinates.length >= 2) {
           final lat = address.location!.coordinates[1];
           final lng = address.location!.coordinates[0];
           
-          final zoneId = 'zone_${partner.id}_${address.nameUnit ?? registeredCount}';
-          debugPrint("Registrando zona: $zoneId (${partner.name}) lat=$lat, lng=$lng");
-          
-          try {
-            final bool success = await _geofenceService.addGeofenceZone(
-              zone: Zone(
-                id: zoneId,
-                radius: 100, // 100 metros
-                coordinates: [
-                  LatLng.degree(lat, lng),
-                ],
-                triggers: [
-                  GeofenceEventType.enter,
-                  GeofenceEventType.exit,
-                  GeofenceEventType.dwell,
-                ],
-                initialTrigger: GeofenceEventType.enter,
-                dwellLoiteringDelay: const Duration(minutes: 1),
-              ),
+          double distance = 0;
+          if (userPosition != null) {
+            distance = Geolocator.distanceBetween(
+              userPosition.latitude,
+              userPosition.longitude,
+              lat,
+              lng,
             );
-
-            if (success) {
-              registeredCount++;
-              debugPrint("Zona registrada com sucesso: $zoneId");
-            } else {
-              debugPrint("Falha ao registrar zona para: ${partner.name}");
-            }
-          } catch (e) {
-            debugPrint("Erro ao registrar zona $zoneId: $e");
           }
+
+          allAddresses.add(_AddressWithDistance(
+            partner: partner,
+            address: address,
+            lat: lat,
+            lng: lng,
+            distance: distance,
+          ));
         }
+      }
+    }
+
+    // ORDENAR: Ordenar por distância se a posição do usuário estiver disponível
+    if (userPosition != null) {
+      allAddresses.sort((a, b) => a.distance.compareTo(b.distance));
+      debugPrint("Ordenando endereços por distância do usuário.");
+    }
+
+    // LIMITAR: Pegar apenas os 20 mais próximos
+    final topAddresses = allAddresses.take(maxGeofences).toList();
+    debugPrint("Registrando os ${topAddresses.length} endereços mais próximos (limite: $maxGeofences).");
+
+    int registeredCount = 0;
+    for (var item in topAddresses) {
+      final partner = item.partner;
+      final address = item.address;
+      final lat = item.lat;
+      final lng = item.lng;
+      
+      final zoneId = 'zone_${partner.id}_${address.nameUnit ?? registeredCount}';
+      debugPrint("Registrando zona: $zoneId (${partner.name}) a ${item.distance.toInt()}m");
+      
+      try {
+        final bool success = await _geofenceService.addGeofenceZone(
+          zone: Zone(
+            id: zoneId,
+            radius: 100, // 100 metros
+            coordinates: [
+              LatLng.degree(lat, lng),
+            ],
+            triggers: [
+              GeofenceEventType.enter,
+              GeofenceEventType.exit,
+              GeofenceEventType.dwell,
+            ],
+            initialTrigger: GeofenceEventType.enter,
+            dwellLoiteringDelay: const Duration(minutes: 1),
+          ),
+        );
+
+        if (success) {
+          registeredCount++;
+        } else {
+          debugPrint("Falha ao registrar zona para: ${partner.name}");
+        }
+      } catch (e) {
+        debugPrint("Erro ao registrar zona $zoneId: $e");
       }
     }
     debugPrint("Total de zonas registradas com sucesso: $registeredCount");
   }
+}
+
+/// Classe auxiliar interna para facilitar a ordenação por distância.
+class _AddressWithDistance {
+  final Partner partner;
+  final dynamic address; // Usa dynamic ou Address se disponível
+  final double lat;
+  final double lng;
+  final double distance;
+
+  _AddressWithDistance({
+    required this.partner,
+    required this.address,
+    required this.lat,
+    required this.lng,
+    required this.distance,
+  });
 }
 
 @pragma('vm:entry-point')

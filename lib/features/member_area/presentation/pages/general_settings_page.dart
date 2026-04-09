@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:ascesa/core/services/settings_service.dart';
 import 'package:ascesa/features/auth/presentation/pages/login_page.dart';
 
 class GeneralSettingsPage extends StatefulWidget {
@@ -10,6 +11,30 @@ class GeneralSettingsPage extends StatefulWidget {
 }
 
 class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
+  final SettingsService _settingsService = SettingsService();
+  bool _isPerformanceModeEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final enabled = await _settingsService.isPerformanceModeEnabled();
+    if (mounted) {
+      setState(() {
+        _isPerformanceModeEnabled = enabled;
+      });
+    }
+  }
+
+  Future<void> _togglePerformanceMode(bool value) async {
+    await _settingsService.setPerformanceModeEnabled(value);
+    setState(() {
+      _isPerformanceModeEnabled = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +72,10 @@ class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
             ),
             const SizedBox(height: 32),
             
-            const SizedBox(height: 8),
+            _buildSectionTitle('Preferências'),
+            _buildPerformanceModeItem(),
+            
+            const SizedBox(height: 32),
             _buildSectionTitle('Sessão'),
             _buildLogoutItem(
               onTap: () {
@@ -55,6 +83,41 @@ class _GeneralSettingsPageState extends State<GeneralSettingsPage> {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPerformanceModeItem() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.1)),
+      ),
+      child: SwitchListTile(
+        value: _isPerformanceModeEnabled,
+        onChanged: _togglePerformanceMode,
+        activeColor: AppColors.greenPrimary,
+        title: const Text(
+          'Modo de Performance',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.greenDark,
+          ),
+        ),
+        subtitle: const Text(
+          'Limita o mapa aos 20 locais mais próximos para melhorar a velocidade.',
+          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+        ),
+        secondary: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.greenPrimary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.speed_rounded, color: AppColors.greenPrimary, size: 22),
         ),
       ),
     );
