@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
 import 'package:ascesa/features/benefits/data/models/partner_model.dart';
+import 'package:ascesa/core/network/auth_interceptor.dart';
 
 class BenefitsRemoteDataSource {
   final Dio _dio;
@@ -17,7 +18,11 @@ class BenefitsRemoteDataSource {
         if (token != null) 'Authorization': 'Bearer $token',
       },
     ),
-  );
+  ) {
+    if (dio == null) {
+      _dio.interceptors.add(AuthInterceptor());
+    }
+  }
 
   Future<List<PartnerModel>> getPartners() async {
     try {

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
 import 'package:ascesa/features/news/data/models/news_model.dart';
+import 'package:ascesa/core/network/auth_interceptor.dart';
 
 class NewsRemoteDataSource {
   final Dio _dio;
@@ -15,7 +16,11 @@ class NewsRemoteDataSource {
         'Accept': 'application/json',
       },
     ),
-  );
+  ) {
+    if (dio == null) {
+      _dio.interceptors.add(AuthInterceptor());
+    }
+  }
 
   Future<List<NewsModel>> getNews({int page = 1, int limit = 10}) async {
     try {

@@ -112,25 +112,25 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
-    if (_useBiometrics || !_showFullForm) {
+    if (!_showFullForm) {
       final credentials = await _localDataSource.getCredentials();
       if (credentials != null) {
-        if (!_showFullForm) {
-          // Se o formulário não está sendo exibido, faz o bypass da biometria
+        // Exige biometria para o login simplificado (sem formulário)
+        final authenticated = await _biometricService.authenticate();
+        if (authenticated) {
           _emailController.text = credentials['email']!;
           _passwordController.text = credentials['password']!;
-        } else if (_useBiometrics &&
-            ((_emailController.text.isEmpty && _passwordController.text.isEmpty) ||
-             (_emailController.text == credentials['email']))) {
-          // Exige biometria apenas se estiver mostrando o formulário e a opção estiver marcada
-          final authenticated = await _biometricService.authenticate();
-          if (authenticated) {
-            _emailController.text = credentials['email']!;
-            _passwordController.text = credentials['password']!;
-          } else {
-            return;
-          }
+        } else {
+          setState(() {
+            _showFullForm = true;
+          });
+          return;
         }
+      } else {
+        setState(() {
+          _showFullForm = true;
+        });
+        return;
       }
     }
 
@@ -321,7 +321,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const Text(
-                        'Usar biometria',
+                        'Usar biometria (Lembrar de mim)',
                         style: TextStyle(color: AppColors.textMuted),
                       ),
                     ],

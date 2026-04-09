@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
+import 'package:ascesa/core/network/auth_interceptor.dart';
 
 class UserRemoteDataSource {
   final Dio _dio;
@@ -16,7 +17,11 @@ class UserRemoteDataSource {
         'Authorization': 'Bearer $token',
       },
     ),
-  );
+  ) {
+    if (dio == null) {
+      _dio.interceptors.add(AuthInterceptor());
+    }
+  }
 
   Future<Map<String, dynamic>> getProfile() async {
     try {

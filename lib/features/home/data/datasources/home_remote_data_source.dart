@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
 import 'package:ascesa/features/home/data/models/category_model.dart';
+import 'package:ascesa/core/network/auth_interceptor.dart';
 
 class HomeRemoteDataSource {
   final Dio _dio;
@@ -18,7 +19,11 @@ class HomeRemoteDataSource {
         if (token != null) 'Authorization': 'Bearer $token',
       },
     ),
-  );
+  ) {
+    if (dio == null) {
+      _dio.interceptors.add(AuthInterceptor());
+    }
+  }
 
   Future<List<CategoryModel>> getCategories() async {
     try {
