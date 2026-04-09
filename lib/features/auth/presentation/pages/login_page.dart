@@ -75,12 +75,40 @@ class _LoginPageState extends State<LoginPage> {
     if (_authController.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_authController.errorMessage!),
+          content: Text(_translateError(_authController.errorMessage!)),
           backgroundColor: Colors.red,
         ),
       );
       _authController.clearError();
     }
+  }
+
+  String _translateError(String error) {
+    final lowerError = error.toLowerCase();
+    
+    if (lowerError.contains('invalid credentials') || lowerError.contains('incorrect password')) {
+      return 'E-mail ou senha inválidos.';
+    }
+    
+    if (lowerError.contains('password must be longer than')) {
+      // Tenta extrair o número se existir, ex: "password must be longer than 6 characters"
+      final match = RegExp(r'\d+').firstMatch(error);
+      if (match != null) {
+        return 'A senha deve ter pelo menos ${match.group(0)} caracteres.';
+      }
+      return 'A senha é muito curta.';
+    }
+
+    if (lowerError.contains('user not found')) {
+      return 'Usuário não encontrado.';
+    }
+
+    if (lowerError.contains('email must be a valid email')) {
+      return 'Por favor, insira um e-mail válido.';
+    }
+
+    // Fallback para erros desconhecidos (mantém o original ou traduz genérico)
+    return error;
   }
 
   Future<void> _handleLogin() async {
