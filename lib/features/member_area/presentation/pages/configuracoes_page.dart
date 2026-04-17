@@ -4,11 +4,22 @@ import 'package:ascesa/features/member_area/presentation/pages/user_profile_page
 import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
 import 'package:ascesa/features/member_area/presentation/pages/dependents_page.dart';
 import 'package:ascesa/features/member_area/presentation/pages/general_settings_page.dart';
+import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
+import 'package:ascesa/features/support/presentation/pages/support_page.dart';
 
 class ConfiguracoesPage extends StatelessWidget {
   final UserProfileController userProfileController;
+  final SupportController supportController;
+  final String token;
+  final String userId;
   
-  const ConfiguracoesPage({super.key, required this.userProfileController});
+  const ConfiguracoesPage({
+    super.key, 
+    required this.userProfileController,
+    required this.supportController,
+    required this.token,
+    required this.userId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +72,7 @@ class ConfiguracoesPage extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const DependentsPage()),
+                  MaterialPageRoute(builder: (context) => DependentsPage(token: token)),
                 );
               },
             ),
@@ -73,6 +84,22 @@ class ConfiguracoesPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const GeneralSettingsPage()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildSettingsItem(
+              icon: Icons.headset_mic_outlined,
+              label: 'Suporte',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SupportPage(
+                      controller: supportController,
+                      userId: userId,
+                    ),
+                  ),
                 );
               },
             ),

@@ -304,45 +304,43 @@ class _LoginPageState extends State<LoginPage> {
 
               // Options
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _useBiometrics,
-                        onChanged: (value) {
-                          setState(() {
-                            _useBiometrics = value ?? false;
-                          });
-                        },
-                        activeColor: AppColors.greenPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      const Text(
-                        'Usar biometria (Lembrar de mim)',
-                        style: TextStyle(color: AppColors.textMuted),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordPage(),
-                        ),
-                      );
+                  Checkbox(
+                    value: _useBiometrics,
+                    onChanged: (value) {
+                      setState(() {
+                        _useBiometrics = value ?? false;
+                      });
                     },
-                    child: const Text(
-                      'Esqueceu sua senha?',
-                      style: TextStyle(
-                        color: Colors.blueAccent,
-                      ), // Blue as in the mock
+                    activeColor: AppColors.greenPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
+                  const Text(
+                    'Usar biometria (Lembrar de mim)',
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
                 ],
+              ),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordPage(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Esqueceu sua senha?',
+                    style: TextStyle(
+                      color: Colors.blueAccent,
+                    ), // Blue as in the mock
+                  ),
+                ),
               ),
               const SizedBox(height: 32),
               ],

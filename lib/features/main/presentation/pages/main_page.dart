@@ -26,6 +26,10 @@ import 'package:ascesa/features/member_area/domain/usecases/update_user_use_case
 import 'package:ascesa/features/member_area/domain/usecases/get_user_profile_use_case.dart';
 import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
 import 'package:ascesa/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
+import 'package:ascesa/features/support/data/repositories/support_repository_impl.dart';
+import 'package:ascesa/features/support/data/datasources/support_remote_data_source.dart';
+import 'package:ascesa/features/support/data/services/support_socket_service.dart';
 
 class MainPage extends StatefulWidget {
   final User user;
@@ -41,6 +45,7 @@ class MainPageState extends State<MainPage> {
   late final BenefitsController _benefitsController;
   late final HomeController _homeController;
   late final UserProfileController _userProfileController;
+  late final SupportController _supportController;
 
   late User _currentUser;
   late final List<Widget> _pages;
@@ -86,6 +91,18 @@ class MainPageState extends State<MainPage> {
       authLocalDataSource: authLocalDataSource,
       user: _currentUser,
     );
+ 
+    final supportRemoteDataSource = SupportRemoteDataSourceImpl(
+      token: widget.token,
+    );
+    final supportRepository = SupportRepositoryImpl(remoteDataSource: supportRemoteDataSource);
+    final supportSocketService = SupportSocketService(token: widget.token);
+    _supportController = SupportController(
+      repository: supportRepository,
+      socketService: supportSocketService,
+    );
+    _supportController.init();
+    _supportController.addListener(_onSupportUpdate);
 
     _userProfileController.addListener(_onUserProfileUpdated);
     _userProfileController.fetchProfile();
@@ -94,6 +111,7 @@ class MainPageState extends State<MainPage> {
       HomePage(
         user: _currentUser,
         controller: _homeController,
+        supportController: _supportController,
         onCategorySelected: (categoryName) {
           _benefitsController.setFilter(categoryName);
           _onItemTapped(1); // Switch to Convenios tab
@@ -104,7 +122,12 @@ class MainPageState extends State<MainPage> {
         homeController: _homeController,
       ),
       const NoticiasPage(),
-      ConfiguracoesPage(userProfileController: _userProfileController),
+      ConfiguracoesPage(
+        userProfileController: _userProfileController,
+        supportController: _supportController,
+        token: widget.token,
+        userId: _currentUser.id,
+      ),
     ];
 
     // Configura callback para quando o usuário clica na notificação
@@ -154,17 +177,32 @@ class MainPageState extends State<MainPage> {
 
   void _onUserProfileUpdated() {
     if (_userProfileController.user != _currentUser) {
-      setState(() {
-        _currentUser = _userProfileController.user;
-        // Rebuild pages with new user
-        _pages[0] = HomePage(
-          user: _currentUser,
-          controller: _homeController,
-          onCategorySelected: (categoryName) {
-            _benefitsController.setFilter(categoryName);
-            _onItemTapped(1);
-          },
-        );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _currentUser = _userProfileController.user;
+            // Rebuild pages with new user
+            _pages[0] = HomePage(
+              user: _currentUser,
+              controller: _homeController,
+              supportController: _supportController,
+              onCategorySelected: (categoryName) {
+                _benefitsController.setFilter(categoryName);
+                _onItemTapped(1);
+              },
+            );
+          });
+        }
+      });
+    }
+  }
+
+  void _onSupportUpdate() {
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {});
+        }
       });
     }
   }
@@ -173,6 +211,8 @@ class MainPageState extends State<MainPage> {
   void dispose() {
     NotificationService.onNotificationTapped = null;
     _userProfileController.removeListener(_onUserProfileUpdated);
+    _supportController.removeListener(_onSupportUpdate);
+    _supportController.dispose();
     super.dispose();
   }
 

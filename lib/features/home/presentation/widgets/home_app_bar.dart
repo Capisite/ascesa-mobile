@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
-
 import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
+import 'package:ascesa/features/support/presentation/pages/support_page.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final User user;
-  const HomeAppBar({super.key, required this.user});
+  final SupportController supportController;
+
+  const HomeAppBar({
+    super.key,
+    required this.user,
+    required this.supportController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,25 +41,53 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: Stack(
-            children: [
-              const Icon(Icons.notifications_none, color: AppColors.textMuted),
-              Positioned(
-                right: 2,
-                top: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+        ListenableBuilder(
+          listenable: supportController,
+          builder: (context, child) {
+            return IconButton(
+              icon: Stack(
+                children: [
+                  const Icon(Icons.notifications_none, color: AppColors.textMuted),
+                  if (supportController.unreadCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 14,
+                          minHeight: 14,
+                        ),
+                        child: Text(
+                          '${supportController.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
-          onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SupportPage(
+                      controller: supportController,
+                      userId: user.id,
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ],
     );
