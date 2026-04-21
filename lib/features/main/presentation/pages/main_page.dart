@@ -7,6 +7,18 @@ import 'package:ascesa/features/benefits/presentation/pages/convenios_page.dart'
 import 'package:ascesa/features/benefits/presentation/pages/benefits_map_page.dart';
 import 'package:ascesa/features/news/presentation/pages/noticias_page.dart';
 import 'package:ascesa/features/member_area/presentation/pages/configuracoes_page.dart';
+import 'package:ascesa/features/member_area/presentation/pages/configuracoes_page.dart';
+import 'package:ascesa/features/faq/presentation/pages/faq_page.dart';
+import 'package:ascesa/features/faq/presentation/controllers/faq_controller.dart';
+import 'package:ascesa/features/faq/domain/usecases/get_faqs.dart';
+import 'package:ascesa/features/faq/data/repositories/faq_repository_impl.dart';
+import 'package:ascesa/features/faq/data/datasources/faq_remote_data_source.dart';
+import 'package:ascesa/features/vitrine/presentation/pages/vitrine_page.dart';
+import 'package:ascesa/features/vitrine/presentation/controllers/vitrine_controller.dart';
+import 'package:ascesa/features/vitrine/domain/usecases/get_vitrine_items.dart';
+import 'package:ascesa/features/vitrine/data/repositories/vitrine_repository_impl.dart';
+import 'package:ascesa/features/vitrine/data/datasources/vitrine_remote_data_source.dart';
+import 'package:ascesa/features/main/presentation/widgets/app_drawer.dart';
 
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
@@ -41,11 +53,14 @@ class MainPage extends StatefulWidget {
 }
 
 class MainPageState extends State<MainPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   late final BenefitsController _benefitsController;
   late final HomeController _homeController;
   late final UserProfileController _userProfileController;
   late final SupportController _supportController;
+  late final FaqController _faqController;
+  late final VitrineController _vitrineController;
 
   late User _currentUser;
   late final List<Widget> _pages;
@@ -107,11 +122,24 @@ class MainPageState extends State<MainPage> {
     _userProfileController.addListener(_onUserProfileUpdated);
     _userProfileController.fetchProfile();
 
+    // Dependency Injection for FAQ
+    final faqRemoteDataSource = FaqRemoteDataSource();
+    final faqRepository = FaqRepositoryImpl(remoteDataSource: faqRemoteDataSource);
+    final getFaqsUseCase = GetFaqs(faqRepository);
+    _faqController = FaqController(getFaqsUseCase: getFaqsUseCase);
+
+    // Dependency Injection for Vitrine
+    final vitrineRemoteDataSource = VitrineRemoteDataSource();
+    final vitrineRepository = VitrineRepositoryImpl(remoteDataSource: vitrineRemoteDataSource);
+    final getVitrineItemsUseCase = GetVitrineItems(vitrineRepository);
+    _vitrineController = VitrineController(getVitrineItemsUseCase: getVitrineItemsUseCase);
+
     _pages = [
       HomePage(
         user: _currentUser,
         controller: _homeController,
         supportController: _supportController,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
         onCategorySelected: (categoryName) {
           _benefitsController.setFilter(categoryName);
           _onItemTapped(1); // Switch to Convenios tab
@@ -120,13 +148,27 @@ class MainPageState extends State<MainPage> {
       ConveniosPage(
         benefitsController: _benefitsController,
         homeController: _homeController,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
-      const NoticiasPage(),
+      NoticiasPage(
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
       ConfiguracoesPage(
         userProfileController: _userProfileController,
         supportController: _supportController,
         token: widget.token,
         userId: _currentUser.id,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      FaqPage(
+        controller: _faqController,
+        supportController: _supportController,
+        userId: _currentUser.id,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      VitrinePage(
+        controller: _vitrineController,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
     ];
 
@@ -186,6 +228,7 @@ class MainPageState extends State<MainPage> {
               user: _currentUser,
               controller: _homeController,
               supportController: _supportController,
+              onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
               onCategorySelected: (categoryName) {
                 _benefitsController.setFilter(categoryName);
                 _onItemTapped(1);
@@ -231,54 +274,18 @@ class MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.bgLight,
-      body: IndexedStack(index: _selectedIndex, children: _pages),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed, // ensures all 4 items show
-            backgroundColor: Colors.white,
-            selectedItemColor: AppColors.greenPrimary,
-            unselectedItemColor: AppColors.textLight,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.handshake_outlined),
-                activeIcon: Icon(Icons.handshake),
-                label: 'Convênios',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.article_outlined),
-                activeIcon: Icon(Icons.article),
-                label: 'Notícias',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings_outlined),
-                activeIcon: Icon(Icons.settings),
-                label: 'Configurações',
-              ),
-            ],
-          ),
-        ),
+      drawer: AppDrawer(
+        user: _currentUser,
+        currentIndex: _selectedIndex,
+        onSelectItem: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
+      body: IndexedStack(index: _selectedIndex, children: _pages),
     );
   }
 }

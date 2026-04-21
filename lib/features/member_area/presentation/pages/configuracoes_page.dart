@@ -12,6 +12,7 @@ class ConfiguracoesPage extends StatelessWidget {
   final SupportController supportController;
   final String token;
   final String userId;
+  final VoidCallback? onMenuPressed;
   
   const ConfiguracoesPage({
     super.key, 
@@ -19,6 +20,7 @@ class ConfiguracoesPage extends StatelessWidget {
     required this.supportController,
     required this.token,
     required this.userId,
+    this.onMenuPressed,
   });
 
   @override
@@ -29,6 +31,12 @@ class ConfiguracoesPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        leading: onMenuPressed != null
+            ? IconButton(
+                icon: const Icon(Icons.menu, color: AppColors.greenDark),
+                onPressed: onMenuPressed,
+              )
+            : null,
         title: const Text(
           'Configurações',
           style: TextStyle(

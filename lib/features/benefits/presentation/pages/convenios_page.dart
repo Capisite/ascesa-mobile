@@ -12,11 +12,13 @@ import 'package:ascesa/features/benefits/presentation/pages/benefits_map_page.da
 class ConveniosPage extends StatelessWidget {
   final BenefitsController benefitsController;
   final HomeController homeController;
+  final VoidCallback? onMenuPressed;
   
   const ConveniosPage({
     super.key,
     required this.benefitsController,
     required this.homeController,
+    this.onMenuPressed,
   });
 
   @override
@@ -25,7 +27,7 @@ class ConveniosPage extends StatelessWidget {
       backgroundColor: AppColors.bgLight,
       body: CustomScrollView(
         slivers: [
-          const ConveniosHeader(),
+          ConveniosHeader(onMenuPressed: onMenuPressed),
 
           SliverToBoxAdapter(
             child: Padding(

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 
 class ConveniosHeader extends StatelessWidget {
-  const ConveniosHeader({super.key});
+  final VoidCallback? onMenuPressed;
+  const ConveniosHeader({super.key, this.onMenuPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -10,6 +11,12 @@ class ConveniosHeader extends StatelessWidget {
       backgroundColor: AppColors.greenDark,
       expandedHeight: 220,
       pinned: true,
+      leading: onMenuPressed != null
+          ? IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              onPressed: onMenuPressed,
+            )
+          : null,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(

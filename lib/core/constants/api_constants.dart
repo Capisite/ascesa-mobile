@@ -12,6 +12,8 @@ class ApiConstants {
   static const String dependentsEndpoint = '/dependents';
   static const String supportConversationEndpoint = '/support-chat/my-conversation';
   static const String supportMessageEndpoint = '/support-chat/messages';
+  static const String faqEndpoint = '/faq';
+  static const String vitrineEndpoint = '/virtual-showcase';
 
   static String partnerAccessEndpoint(String partnerId) =>
       '/allya/partners/$partnerId/access';

@@ -7,11 +7,13 @@ import 'package:ascesa/features/support/presentation/pages/support_page.dart';
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final User user;
   final SupportController supportController;
+  final VoidCallback? onMenuPressed;
 
   const HomeAppBar({
     super.key,
     required this.user,
     required this.supportController,
+    this.onMenuPressed,
   });
 
   @override
@@ -19,6 +21,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
+      leading: onMenuPressed != null 
+        ? IconButton(
+            icon: const Icon(Icons.menu, color: AppColors.greenDark),
+            onPressed: onMenuPressed,
+          )
+        : null,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

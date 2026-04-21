@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
   final HomeController controller;
   final SupportController supportController;
   final Function(String)? onCategorySelected;
+  final VoidCallback? onMenuPressed;
   
   const HomePage({
     super.key,
@@ -22,6 +23,7 @@ class HomePage extends StatefulWidget {
     required this.controller,
     required this.supportController,
     this.onCategorySelected,
+    this.onMenuPressed,
   });
 
   @override
@@ -36,6 +38,7 @@ class _HomePageState extends State<HomePage> {
       appBar: HomeAppBar(
         user: widget.user,
         supportController: widget.supportController,
+        onMenuPressed: widget.onMenuPressed,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
