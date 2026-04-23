@@ -70,31 +70,37 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'geofence_notifications',
-      'Alertas de Parceiros',
-      channelDescription: 'Notificações quando você estiver perto de um parceiro',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
+    try {
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'geofence_notifications',
+        'Alertas de Parceiros',
+        channelDescription: 'Notificações quando você estiver perto de um parceiro',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+      const NotificationDetails notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
 
-    await _notificationsPlugin.show(
-      id,
-      title,
-      body,
-      notificationDetails,
-      payload: payload,
-    );
+      await _notificationsPlugin.show(
+        id,
+        title,
+        body,
+        notificationDetails,
+        payload: payload,
+      );
+    } catch (e) {
+      // Captura erros do plugin (permissão negada, overlay bloqueado, etc.)
+      // para evitar unhandled future que mata o app.
+      debugPrint('[NotificationService] Falha ao exibir notificação: $e');
+    }
   }
 }

@@ -8,8 +8,7 @@ import 'package:ascesa/features/news/presentation/controllers/news_controller.da
 import 'package:ascesa/features/news/presentation/widgets/news_card.dart';
 
 class NoticiasPage extends StatefulWidget {
-  final VoidCallback? onMenuPressed;
-  const NoticiasPage({super.key, this.onMenuPressed});
+  const NoticiasPage({super.key});
 
   @override
   State<NoticiasPage> createState() => _NoticiasPageState();
@@ -38,12 +37,7 @@ class _NoticiasPageState extends State<NoticiasPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: widget.onMenuPressed != null
-            ? IconButton(
-                icon: const Icon(Icons.menu, color: AppColors.greenDark),
-                onPressed: widget.onMenuPressed,
-              )
-            : null,
+        automaticallyImplyLeading: false,
         title: const Text(
           'Últimas Notícias',
           style: TextStyle(

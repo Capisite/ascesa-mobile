@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/core/services/settings_service.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
@@ -49,6 +50,16 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
   StreamSubscription<Position>? _positionSubscription;
   bool _isPerformanceModeEnabled = false;
 
+  // Permission state: null = checking, true = granted, false = denied/denied-forever
+  bool? _locationGranted;
+  bool _locationDeniedForever = false;
+
+  // Guard: o MapController só pode ser usado após o FlutterMap ser renderizado.
+  // Movimentos que chegam antes ficam em _pendingMove e são aplicados no onMapReady.
+  bool _mapReady = false;
+  LatLng? _pendingMove;
+  double _pendingZoom = 14.0;
+
   static const LatLng _initialPosition = LatLng(-15.7942, -47.8822); // Brasília default
 
   @override
@@ -57,6 +68,28 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     if (widget.initialPartner != null) {
       _selectedPartner = widget.initialPartner;
     }
+    _checkPermissionAndInit();
+  }
+
+  /// Ponto único de entrada — verifica permissão antes de qualquer operação de localização.
+  Future<void> _checkPermissionAndInit() async {
+    final permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        setState(() {
+          _locationGranted = false;
+          _locationDeniedForever = permission == LocationPermission.deniedForever;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() => _locationGranted = true);
+    }
+
     _loadSettingsAndMarkers();
     _determineInitialPosition();
     _initLocationStream();
@@ -81,7 +114,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           final lat = address.location!.coordinates[1];
           final lng = address.location!.coordinates[0];
           final pos = LatLng(lat, lng);
-          
+
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _mapController.move(pos, 15.0);
           });
@@ -90,31 +123,20 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
       }
     }
 
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
-    }
-    
-    if (permission == LocationPermission.deniedForever) return;
-    
     final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null && mounted) {
-        final pos = LatLng(lastKnown.latitude, lastKnown.longitude);
-        setState(() {
-          _currentUserPosition = pos;
-        });
-        _loadMarkers();
-        if (widget.initialPartner == null) {
-          _mapController.move(pos, 14.0);
-        }
+    if (lastKnown != null && mounted) {
+      final pos = LatLng(lastKnown.latitude, lastKnown.longitude);
+      setState(() {
+        _currentUserPosition = pos;
+      });
+      _loadMarkers();
+      if (widget.initialPartner == null) {
+        _safeMove(pos, 14.0);
       }
+    }
 
     try {
       final position = await Geolocator.getCurrentPosition(
@@ -131,7 +153,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         });
         _loadMarkers();
         if (widget.initialPartner == null) {
-          _mapController.move(pos, 14.0);
+          _safeMove(pos, 14.0);
         }
       }
     } catch (e) {
@@ -152,9 +174,8 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           _currentUserPosition = newPos;
         });
         _loadMarkers();
-        // Auto-follow: only if no partner is initially selected or we aren't in "selection mode"
         if (widget.initialPartner == null) {
-          _mapController.move(newPos, _mapController.camera.zoom);
+          _safeMove(newPos, _mapReady ? _mapController.camera.zoom : 14.0);
         }
       }
     });
@@ -164,25 +185,22 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     List<Partner> partners = widget.benefitsController.partners;
     final List<Marker> newMarkers = [];
 
-    // Se o modo de performance estiver ativado e tivermos a localização do usuário,
-    // filtramos pelos 20 mais próximos.
     if (_isPerformanceModeEnabled && _currentUserPosition != null) {
-      // Cria uma lista flat de endereços para ordenar por distância
       List<_PartnerAddressWithDistance> sortedList = [];
-      
+
       for (var partner in partners) {
         for (var address in partner.addressess) {
           if (address.location != null && address.location!.coordinates.length >= 2) {
             final lat = address.location!.coordinates[1];
             final lng = address.location!.coordinates[0];
-            
+
             final distance = Geolocator.distanceBetween(
               _currentUserPosition!.latitude,
               _currentUserPosition!.longitude,
               lat,
               lng,
             );
-            
+
             sortedList.add(_PartnerAddressWithDistance(
               partner: partner,
               address: address,
@@ -195,15 +213,12 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
       }
 
       sortedList.sort((a, b) => a.distance.compareTo(b.distance));
-      
-      // Pega os 20 mais próximos
       final top20 = sortedList.take(20).toList();
-      
+
       for (var item in top20) {
         newMarkers.add(_buildMarker(item.partner, item.address, item.lat, item.lng));
       }
     } else {
-      // Modo normal ou sem localização: renderiza todos
       for (var partner in partners) {
         for (var address in partner.addressess) {
           if (address.location != null && address.location!.coordinates.length >= 2) {
@@ -241,11 +256,46 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     );
   }
 
+  /// Move o mapa com segurança, respeitando se o FlutterMap já foi renderizado.
+  /// Caso ainda não esteja pronto, armazena o movimento para ser aplicado no onMapReady.
+  void _safeMove(LatLng pos, double zoom) {
+    if (_mapReady) {
+      _mapController.move(pos, zoom);
+    } else {
+      _pendingMove = pos;
+      _pendingZoom = zoom;
+    }
+  }
+
   void _onMyLocationPressed() {
     if (_currentUserPosition != null) {
-      _mapController.move(_currentUserPosition!, 15.0);
+      _safeMove(_currentUserPosition!, 15.0);
     } else {
       _determineInitialPosition();
+    }
+  }
+
+  /// Solicita a permissão novamente ou abre as configurações do app,
+  /// dependendo se foi negada permanentemente ou não.
+  Future<void> _requestPermission() async {
+    if (_locationDeniedForever) {
+      // Usuário bloqueou permanentemente → abre configurações do sistema
+      await openAppSettings();
+      // Após retornar das configurações, re-verifica
+      await _checkPermissionAndInit();
+    } else {
+      // Tenta solicitar a permissão novamente via Geolocator
+      final result = await Geolocator.requestPermission();
+      if (result == LocationPermission.whileInUse ||
+          result == LocationPermission.always) {
+        await _checkPermissionAndInit();
+      } else {
+        if (mounted) {
+          setState(() {
+            _locationDeniedForever = result == LocationPermission.deniedForever;
+          });
+        }
+      }
     }
   }
 
@@ -267,90 +317,186 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location, color: AppColors.greenDark),
-            onPressed: _onMyLocationPressed,
-          ),
+          if (_locationGranted == true)
+            IconButton(
+              icon: const Icon(Icons.my_location, color: AppColors.greenDark),
+              onPressed: _onMyLocationPressed,
+            ),
         ],
       ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _initialPosition,
-              initialZoom: 12.0,
-              onTap: (_, __) {
-                setState(() {
-                  _selectedPartner = null;
-                  _selectedAddress = null;
-                });
-              },
+      // Enquanto verifica a permissão, mostra loading
+      body: _locationGranted == null
+          ? const Center(child: CircularProgressIndicator(color: AppColors.greenPrimary))
+          : _locationGranted == false
+              ? _buildPermissionDeniedView()
+              : _buildMapView(),
+    );
+  }
+
+  /// Tela exibida quando a permissão de localização está negada.
+  Widget _buildPermissionDeniedView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 36.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.greenPrimary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.location_off_outlined,
+                size: 64,
+                color: AppColors.greenPrimary,
+              ),
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.ascesa.app',
+            const SizedBox(height: 32),
+            const Text(
+              'Localização necessária',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.greenDark,
               ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _locationDeniedForever
+                  ? 'A permissão de localização foi bloqueada permanentemente. Acesse as configurações do aplicativo para habilitá-la.'
+                  : 'O mapa de parceiros precisa de acesso à sua localização para mostrar os benefícios mais próximos de você.',
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _requestPermission,
+                icon: Icon(
+                  _locationDeniedForever
+                      ? Icons.settings_outlined
+                      : Icons.location_on_outlined,
+                ),
+                label: Text(
+                  _locationDeniedForever
+                      ? 'Abrir Configurações'
+                      : 'Permitir Localização',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.greenDark,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapView() {
+    return Stack(
+      children: [
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _initialPosition,
+            initialZoom: 12.0,
+            onMapReady: () {
+              setState(() => _mapReady = true);
+              // Aplica movimento pendente (posição que chegou antes do mapa renderizar)
+              if (_pendingMove != null) {
+                _mapController.move(_pendingMove!, _pendingZoom);
+                _pendingMove = null;
+              }
+            },
+            onTap: (_, __) {
+              setState(() {
+                _selectedPartner = null;
+                _selectedAddress = null;
+              });
+            },
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.ascesa.app',
+            ),
+            MarkerLayer(
+              markers: _markers,
+            ),
+            if (_currentUserPosition != null)
               MarkerLayer(
-                markers: _markers,
-              ),
-              if (_currentUserPosition != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _currentUserPosition!,
-                      width: 25,
-                      height: 25,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
+                markers: [
+                  Marker(
+                    point: _currentUserPosition!,
+                    width: 25,
+                    height: 25,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution(
-                    'OpenStreetMap contributors',
-                    onTap: () => {},
                   ),
                 ],
               ),
-            ],
-          ),
-          if (_selectedPartner != null)
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: ConvenioCard(
-                  brandName: _selectedPartner!.name,
-                  category: _selectedPartner!.categoryName ?? 'Parceiro',
-                  discount: _selectedPartner!.title ?? 'Confira os benefícios',
-                  brandColor: AppColors.greenPrimary,
-                  logoUrl: _selectedPartner!.logoUrl,
-                  address: _formatAddress(_selectedAddress),
-                  onOpenDiscount: () => widget.benefitsController.openPartner(
-                    _selectedPartner!.id, context,
-                  ),
+            RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution(
+                  'OpenStreetMap contributors',
+                  onTap: () => {},
+                ),
+              ],
+            ),
+          ],
+        ),
+        if (_selectedPartner != null)
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ConvenioCard(
+                brandName: _selectedPartner!.name,
+                category: _selectedPartner!.categoryName ?? 'Parceiro',
+                discount: _selectedPartner!.title ?? 'Confira os benefícios',
+                brandColor: AppColors.greenPrimary,
+                logoUrl: _selectedPartner!.logoUrl,
+                address: _formatAddress(_selectedAddress),
+                onOpenDiscount: () => widget.benefitsController.openPartner(
+                  _selectedPartner!.id, context,
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -377,4 +523,3 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     return parts.join(' - ');
   }
 }
-

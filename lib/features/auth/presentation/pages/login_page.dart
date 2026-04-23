@@ -31,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
   final BiometricService _biometricService = BiometricService();
   User? _cachedUser;
   bool _showFullForm = true;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -270,13 +271,24 @@ class _LoginPageState extends State<LoginPage> {
               // Password Field
               TextFormField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Senha',
                   hintStyle: const TextStyle(color: AppColors.textLight),
                   prefixIcon: const Icon(
                     Icons.lock_outline,
                     color: AppColors.textLight,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: AppColors.textLight,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
                   ),
                   filled: true,
                   fillColor: Colors.white,

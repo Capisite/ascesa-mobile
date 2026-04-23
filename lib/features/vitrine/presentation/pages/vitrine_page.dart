@@ -6,12 +6,10 @@ import 'package:ascesa/features/vitrine/presentation/pages/vitrine_detail_page.d
 
 class VitrinePage extends StatefulWidget {
   final VitrineController controller;
-  final VoidCallback? onMenuPressed;
 
   const VitrinePage({
     super.key,
     required this.controller,
-    this.onMenuPressed,
   });
 
   @override
@@ -47,12 +45,7 @@ class _VitrinePageState extends State<VitrinePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: widget.onMenuPressed != null
-            ? IconButton(
-                icon: const Icon(Icons.menu, color: AppColors.greenDark),
-                onPressed: widget.onMenuPressed,
-              )
-            : null,
+        automaticallyImplyLeading: false,
         title: const Text(
           'Vitrine Virtual',
           style: TextStyle(

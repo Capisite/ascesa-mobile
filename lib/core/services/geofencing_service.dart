@@ -6,6 +6,7 @@ import 'package:geofence_foreground_service/constants/geofence_event_type.dart';
 import 'package:latlng/latlng.dart';
 import 'package:ascesa/core/services/notification_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:ascesa/features/benefits/domain/entities/partner.dart';
 
 class GeofencingService {
@@ -23,11 +24,42 @@ class GeofencingService {
     // Initial setup if needed, but startGeofencingService handles most of it.
   }
 
-  static Future<void> startService() async {
+  /// Inicia o foreground service de geofencing.
+  /// 
+  /// IMPORTANTE: O foreground service no Android EXIGE a permissão POST_NOTIFICATIONS
+  /// (Android 13+) para chamar startForeground() dentro do prazo do sistema (5s).
+  /// Sem isso, o SO mata o processo com ForegroundServiceDidNotStartInTimeException.
+  static Future<bool> startService() async {
     try {
+      // Verifica permissão de localização
+      final locationPermission = await Geolocator.checkPermission();
+      if (locationPermission == LocationPermission.denied ||
+          locationPermission == LocationPermission.deniedForever) {
+        debugPrint("[Geofencing] Localização negada. Serviço não iniciado.");
+        return false;
+      }
+
+      // O plugin geofence_foreground_service no Android possui um bug fatal:
+      // Se a permissão de localização em background (ACCESS_BACKGROUND_LOCATION) não estiver concedida,
+      // a sua classe nativa chama stopSelf() durante a inicialização (onStartCommand),
+      // SEM chamar startForeground(). Isso faz o Android matar o app por ForegroundServiceDidNotStartInTimeException.
+      // Portanto, o serviço só pode ser iniciado se a permissão "Permitir o tempo todo" estiver garantida.
+      final locationAlwaysStatus = await Permission.locationAlways.status;
+      if (!locationAlwaysStatus.isGranted) {
+        debugPrint("[Geofencing] Permissão 'Permitir o tempo todo' negada. Serviço não iniciado para evitar crash nativo.");
+        return false;
+      }
+
+      // Verifica permissão de notificação (obrigatório para foreground service no Android 13+)
+      final notificationStatus = await Permission.notification.status;
+      if (notificationStatus.isDenied || notificationStatus.isPermanentlyDenied) {
+        debugPrint("[Geofencing] Notificação negada. Foreground service não pode ser iniciado no Android 13+.");
+        return false;
+      }
+
       final bool isRunning = await _geofenceService.isForegroundServiceRunning();
-      debugPrint("Geofencing service running: $isRunning");
-      
+      debugPrint("[Geofencing] Serviço rodando: $isRunning");
+
       if (!isRunning) {
         final bool started = await _geofenceService.startGeofencingService(
           notificationChannelId: 'geofence_notifications',
@@ -36,10 +68,13 @@ class GeofencingService {
           serviceId: 525600,
           callbackDispatcher: callbackDispatcher,
         );
-        debugPrint("Geofencing service started: $started");
+        debugPrint("[Geofencing] Serviço iniciado: $started");
+        return started;
       }
+      return true;
     } catch (e) {
-      debugPrint("Erro ao iniciar geofencing service: $e");
+      debugPrint("[Geofencing] Erro ao iniciar serviço: $e");
+      return false;
     }
   }
 
@@ -58,17 +93,33 @@ class GeofencingService {
   }
 
   static Future<void> registerPartners(List<Partner> partners, {Position? userPosition}) async {
-    // Garantir que o serviço está rodando antes de adicionar zonas
-    await startService();
+    // Verifica se o serviço já estava rodando ANTES de chamar startService
+    final bool wasRunning = await _geofenceService.isForegroundServiceRunning();
 
-    // Limpar zonas antigas para evitar duplicidade ou exceder limites do OS
-    try {
-      await _geofenceService.removeAllGeoFences();
-      debugPrint("Zonas antigas removidas.");
-    } catch (e) {
-      debugPrint("Erro ao remover zonas: $e");
+    // Garante que o serviço está rodando — aborta se permissões negadas
+    final serviceStarted = await startService();
+    if (!serviceStarted) {
+      debugPrint("[Geofencing] Serviço não iniciado. Registro de parceiros ignorado.");
+      return;
     }
-    
+
+    // Bugfix: O Android exige que o Foreground Service chame startForeground()
+    // num prazo de 5 segundos. Se chamarmos removeAllGeoFences() logo após
+    // iniciar o serviço, o plugin pode interromper o serviço prematuramente,
+    // causando o erro ForegroundServiceDidNotStartInTimeException.
+    if (!wasRunning) {
+      debugPrint("[Geofencing] Serviço acabou de iniciar. Aguardando estabilização...");
+      await Future.delayed(const Duration(seconds: 2));
+    } else {
+      // Limpar zonas antigas apenas se o serviço já estava rodando
+      try {
+        await _geofenceService.removeAllGeoFences();
+        debugPrint("Zonas antigas removidas.");
+      } catch (e) {
+        debugPrint("Erro ao remover zonas: $e");
+      }
+    }
+
     _lastRegistrationPosition = userPosition;
 
     if (partners.isEmpty) {

@@ -32,11 +32,26 @@ class ProximityService {
   bool get isRunning => _isRunning;
 
   /// Inicia o monitoramento de proximidade em foreground.
-  void start(List<Partner> partners) {
+  /// Verifica a permissão de localização antes de iniciar o stream.
+  Future<void> start(List<Partner> partners) async {
     if (_isRunning) {
       // Atualiza a lista de parceiros sem reiniciar o stream
       _partners = partners;
       debugPrint("[ProximityService] Lista de parceiros atualizada (${partners.length})");
+      return;
+    }
+
+    // Verifica permissão antes de abrir o stream.
+    // Sem isso, Geolocator lança uma exceção que pode crashar o app.
+    try {
+      final LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        debugPrint("[ProximityService] Permissão de localização negada. Monitoramento não iniciado.");
+        return;
+      }
+    } catch (e) {
+      debugPrint("[ProximityService] Erro ao verificar permissão: $e");
       return;
     }
 
@@ -45,25 +60,31 @@ class ProximityService {
 
     debugPrint("[ProximityService] Iniciando monitoramento com ${partners.length} parceiros");
 
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 50, // Verifica a cada 50m de movimento
-      ),
-    ).listen(
-      (Position position) {
-        _checkProximity(position.latitude, position.longitude);
-        
-        // Verifica se precisa atualizar a lista de 20 geofences mais próximos
-        if (GeofencingService.shouldUpdateGeofences(position)) {
-          debugPrint("[ProximityService] Movimento detectado. Atualizando top 20 geofences.");
-          GeofencingService.registerPartners(_partners, userPosition: position);
-        }
-      },
-      onError: (error) {
-        debugPrint("[ProximityService] Erro no stream de localização: $error");
-      },
-    );
+    try {
+      _positionSubscription = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 50, // Verifica a cada 50m de movimento
+        ),
+      ).listen(
+        (Position position) async {
+          await _checkProximity(position.latitude, position.longitude);
+          
+          // Verifica se precisa atualizar a lista de 20 geofences mais próximos
+          if (GeofencingService.shouldUpdateGeofences(position)) {
+            debugPrint("[ProximityService] Movimento detectado. Atualizando top 20 geofences.");
+            GeofencingService.registerPartners(_partners, userPosition: position);
+          }
+        },
+        onError: (error) {
+          debugPrint("[ProximityService] Erro no stream de localização: $error");
+          _isRunning = false;
+        },
+      );
+    } catch (e) {
+      debugPrint("[ProximityService] Falha ao iniciar stream de localização: $e");
+      _isRunning = false;
+    }
   }
 
   /// Para o monitoramento.
@@ -75,7 +96,7 @@ class ProximityService {
   }
 
   /// Verifica a distância do usuário a todos os parceiros.
-  void _checkProximity(double userLat, double userLng) {
+  Future<void> _checkProximity(double userLat, double userLng) async {
     final now = DateTime.now();
     
     for (var partner in _partners) {
@@ -111,12 +132,18 @@ class ProximityService {
           
           debugPrint("[ProximityService] PARCEIRO PRÓXIMO: ${partner.name} a $distanceFormatted");
           
-          NotificationService.showNotification(
-            id: partnerId.hashCode,
-            title: '📍 ${partner.name} está próximo!',
-            body: 'Você está a $distanceFormatted. Confira os benefícios exclusivos!',
-            payload: partnerId,
-          );
+          // await + try/catch: evita unhandled future que mata o app
+          // quando a permissão de notificação/overlay está negada.
+          try {
+            await NotificationService.showNotification(
+              id: partnerId.hashCode,
+              title: '📍 ${partner.name} está próximo!',
+              body: 'Você está a $distanceFormatted. Confira os benefícios exclusivos!',
+              payload: partnerId,
+            );
+          } catch (e) {
+            debugPrint('[ProximityService] Erro ao notificar parceiro ${partner.name}: $e');
+          }
         }
       }
     }

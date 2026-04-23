@@ -8,22 +8,17 @@ import 'package:ascesa/features/home/presentation/widgets/virtual_id_card_dialog
 
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/home/presentation/controllers/home_controller.dart';
-import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
 
 class HomePage extends StatefulWidget {
   final User user;
   final HomeController controller;
-  final SupportController supportController;
   final Function(String)? onCategorySelected;
-  final VoidCallback? onMenuPressed;
   
   const HomePage({
     super.key,
     required this.user,
     required this.controller,
-    required this.supportController,
     this.onCategorySelected,
-    this.onMenuPressed,
   });
 
   @override
@@ -37,8 +32,6 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.white,
       appBar: HomeAppBar(
         user: widget.user,
-        supportController: widget.supportController,
-        onMenuPressed: widget.onMenuPressed,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

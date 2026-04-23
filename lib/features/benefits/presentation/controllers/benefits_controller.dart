@@ -65,7 +65,14 @@ class BenefitsController extends ChangeNotifier {
       try {
         Position? currentPosition;
         try {
-          currentPosition = await Geolocator.getCurrentPosition();
+          // Só tenta obter localização se a permissão foi concedida
+          final permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.whileInUse ||
+              permission == LocationPermission.always) {
+            currentPosition = await Geolocator.getCurrentPosition();
+          } else {
+            debugPrint("[BenefitsController] Localização negada. Geofencing sem posição inicial.");
+          }
         } catch (e) {
           debugPrint("Erro ao obter localização atual para geofencing: $e");
         }
@@ -77,10 +84,11 @@ class BenefitsController extends ChangeNotifier {
 
       // Inicia o monitoramento de proximidade em foreground (mais confiável)
       try {
-        ProximityService.instance.start(_allPartners);
+        await ProximityService.instance.start(_allPartners);
       } catch (proximityError) {
         debugPrint("Erro ao iniciar proximity service: $proximityError");
       }
+
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
       _isLoading = false;

@@ -2,21 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/faq/presentation/controllers/faq_controller.dart';
 import 'package:ascesa/features/faq/presentation/widgets/faq_item_widget.dart';
-import 'package:ascesa/features/support/presentation/pages/support_page.dart';
-import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
 
 class FaqPage extends StatefulWidget {
   final FaqController controller;
-  final SupportController supportController;
   final String userId;
-  final VoidCallback? onMenuPressed;
 
   const FaqPage({
     super.key,
     required this.controller,
-    required this.supportController,
     required this.userId,
-    this.onMenuPressed,
   });
 
   @override
@@ -57,12 +51,7 @@ class _FaqPageState extends State<FaqPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: widget.onMenuPressed != null
-            ? IconButton(
-                icon: const Icon(Icons.menu, color: AppColors.greenDark),
-                onPressed: widget.onMenuPressed,
-              )
-            : null,
+
         title: const Text(
           'Como podemos ajudar?',
           style: TextStyle(
@@ -169,8 +158,8 @@ class _FaqPageState extends State<FaqPage> {
       decoration: BoxDecoration(
         color: AppColors.greenDark,
         borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          colors: [AppColors.greenDark, const Color(0xFF0F2A16)],
+        gradient: const LinearGradient(
+          colors: [AppColors.greenDark, Color(0xFF0F2A16)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -204,31 +193,6 @@ class _FaqPageState extends State<FaqPage> {
               height: 1.4,
             ),
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SupportPage(
-                    controller: widget.supportController,
-                    userId: widget.userId,
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.greenDark,
-              minimumSize: const Size(double.infinity, 54),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Abrir Suporte',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
           ),
         ],
       ),
