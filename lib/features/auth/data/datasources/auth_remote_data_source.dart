@@ -31,7 +31,7 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<Response> register(Map<String, dynamic> userData) async {
+  Future<Response> register(dynamic userData) async {
     try {
       final response = await _dio.post(
         ApiConstants.registerEndpoint,

@@ -79,5 +79,9 @@
 		<string>location</string>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Precisamos de acesso à câmera para você tirar sua foto de perfil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos de acesso à galeria para você selecionar sua foto de perfil.</string>
 </dict>
 </plist>

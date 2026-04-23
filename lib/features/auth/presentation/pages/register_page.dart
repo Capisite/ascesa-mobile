@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/auth/presentation/widgets/custom_text_field.dart';
@@ -5,7 +6,12 @@ import 'package:ascesa/features/auth/presentation/widgets/custom_dropdown.dart';
 import 'package:ascesa/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 
+import 'package:ascesa/features/auth/presentation/widgets/register_steps/step1_personal_data.dart';
+import 'package:ascesa/features/auth/presentation/widgets/register_steps/step2_contact_access.dart';
+import 'package:ascesa/features/auth/presentation/widgets/register_steps/step3_address_filiation.dart';
+import 'package:ascesa/features/auth/presentation/widgets/register_steps/step4_dependents.dart';
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -28,7 +34,11 @@ class _RegisterPageState extends State<RegisterPage> {
   final _registrationNumberController = TextEditingController();
   String? _selectedGender;
   String? _selectedMaritalStatus;
-  String? _selectedCompany;
+  String? _companyRelationship;
+  final _companyNameController = TextEditingController();
+  final _affiliatedCompanyNameController = TextEditingController();
+  File? _profilePhotoFile;
+  final ImagePicker _imagePicker = ImagePicker();
 
   // Controllers - Step 2
   final _cepController = TextEditingController();
@@ -60,10 +70,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _lgpdEmail = false;
-  bool _lgpdSocial = false;
-  bool _lgpdSms = false;
-  bool _termsConfirmed = false;
 
   final _cpfFormatter = MaskTextInputFormatter(
     mask: '###.###.###-##',
@@ -145,6 +151,8 @@ class _RegisterPageState extends State<RegisterPage> {
     _rgController.dispose();
     _birthDateController.dispose();
     _registrationNumberController.dispose();
+    _companyNameController.dispose();
+    _affiliatedCompanyNameController.dispose();
     _cepController.dispose();
     _streetController.dispose();
     _addressNumberController.dispose();
@@ -256,13 +264,74 @@ class _RegisterPageState extends State<RegisterPage> {
     return cleanError;
   }
 
-  Future<void> _submitRegistration() async {
-    if (!_termsConfirmed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Você precisa aceitar os termos de uso.')),
+  Future<void> _pickProfilePhoto(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
       );
-      return;
+      if (image != null) {
+        final file = File(image.path);
+        final int sizeInBytes = file.lengthSync();
+        if (sizeInBytes > 1 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('A foto deve ter no máximo 1MB.')),
+            );
+          }
+          return;
+        }
+        setState(() {
+          _profilePhotoFile = file;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao selecionar foto: $e');
     }
+  }
+
+  void _showPhotoPickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const ListTile(
+                title: Text(
+                  'Selecione a fonte da foto',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Galeria'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickProfilePhoto(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: const Text('Câmera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickProfilePhoto(ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _submitRegistration() async {
 
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,7 +343,7 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userData = {
+      final formData = FormData.fromMap({
         'name': _nameController.text,
         'email': _emailController.text,
         'password': _passwordController.text,
@@ -285,7 +354,6 @@ class _RegisterPageState extends State<RegisterPage> {
         'phone': _mobilePhoneController.text.replaceAll(RegExp(r'\D'), ''),
         'gender': _mapGender(_selectedGender),
         'maritalStatus': _mapMaritalStatus(_selectedMaritalStatus),
-        'companyName': _selectedCompany,
         'zipCode': _cepController.text.replaceAll(RegExp(r'\D'), ''),
         'street': _streetController.text,
         'addressNumber': _addressNumberController.text,
@@ -297,16 +365,32 @@ class _RegisterPageState extends State<RegisterPage> {
         'mobilePhone': _mobilePhoneController.text.replaceAll(RegExp(r'\D'), ''),
         'fatherName': _fatherNameController.text,
         'motherName': _motherNameController.text,
-        'dependents': _dependents.map((d) => {
-          'name': d['nome'],
-          'birthDate': d['nasc'],
-          'cpf': d['cpf']?.replaceAll(RegExp(r'\D'), ''),
-          'gender': _mapGender(d['sexo']),
-        }).toList(),
-        'notes': 'LGPD: Email($_lgpdEmail), Social($_lgpdSocial), SMS($_lgpdSms)',
-      };
+      });
 
-      await _authDataSource.register(userData);
+      if (_companyRelationship == 'COOPERATIVE_EMPLOYEE' && _companyNameController.text.isNotEmpty) {
+        formData.fields.add(MapEntry('companyName', _companyNameController.text));
+      } else if (_companyRelationship == 'AFFILIATED_MEMBER' && _affiliatedCompanyNameController.text.isNotEmpty) {
+        formData.fields.add(MapEntry('affiliatedCompanyName', _affiliatedCompanyNameController.text));
+      }
+
+      for (var i = 0; i < _dependents.length; i++) {
+        final dep = _dependents[i];
+        formData.fields.addAll([
+          MapEntry('dependents[$i][name]', dep['nome'] ?? ''),
+          MapEntry('dependents[$i][birthDate]', dep['nasc'] ?? ''),
+          MapEntry('dependents[$i][cpf]', dep['cpf']?.replaceAll(RegExp(r'\D'), '') ?? ''),
+          MapEntry('dependents[$i][gender]', _mapGender(dep['sexo'])),
+        ]);
+      }
+
+      if (_profilePhotoFile != null) {
+        formData.files.add(MapEntry(
+          'profilePhoto',
+          await MultipartFile.fromFile(_profilePhotoFile!.path),
+        ));
+      }
+
+      await _authDataSource.register(formData);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -394,771 +478,96 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildStep1() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0), // Reduced from 24
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Dados Pessoais',
-            style: TextStyle(
-              fontSize: 18, // Reduced from 20
-              fontWeight: FontWeight.bold,
-              color: AppColors.greenDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.bgLight, thickness: 1),
-          const SizedBox(height: 16),
-
-          CustomTextField(
-            label: 'Nome completo',
-            hintText: 'Ex: Antonio Carlos',
-            controller: _nameController,
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  label: 'CPF',
-                  hintText: '000.000.000-00',
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [_cpfFormatter],
-                  controller: _cpfController,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomTextField(
-                  label: 'RG',
-                  hintText: '0.000.000',
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [_rgFormatter],
-                  controller: _rgController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  label: 'Data de Nascimento',
-                  hintText: 'DD/MM/AAAA',
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [_dateFormatter],
-                  controller: _birthDateController,
-                  suffixIcon: const Icon(
-                    Icons.calendar_today_outlined,
-                    color: AppColors.textLight,
-                    size: 18, // Reduced from 20
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomTextField(
-                  label: 'Matrícula',
-                  hintText: 'Digite a matrícula',
-                  controller: _registrationNumberController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: CustomDropdown(
-                  label: 'Sexo',
-                  hintText: 'Selecione', // Reduced hint text
-                  items: const ['Masculino', 'Feminino', 'Outro', 'Não informado'],
-                  value: _selectedGender,
-                  onChanged: (val) => setState(() => _selectedGender = val),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomDropdown(
-                  label: 'Estado Civil',
-                  hintText: 'Selecione', // Reduced hint text
-                  items: const [
-                    'Solteiro(a)',
-                    'Casado(a)',
-                    'Divorciado(a)',
-                    'Viúvo(a)',
-                    'Separado(a)',
-                    'União estável',
-                  ],
-                  value: _selectedMaritalStatus,
-                  onChanged: (val) => setState(() => _selectedMaritalStatus = val),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          CustomDropdown(
-            label: 'Empresa na qual Trabalha',
-            hintText: 'Selecione um campo',
-            items: const ["Banco Sicoob", "Sicoob Confederação", "Cooperativas Centrais e Singulares do Sicoob", "Sicoob Seguradora", "Sicoob Administradora de Consórcio", "Sicoob DTVM", "Fundação Sicoob Previdência", "Sicoob Pagamentos", "Cooperativa do Sicoob(terceirizados)"],
-            value: _selectedCompany,
-            onChanged: (val) => setState(() => _selectedCompany = val),
-          ),
-          const SizedBox(height: 24),
-
-          Align(alignment: Alignment.centerRight, child: _buildNextButton()),
-        ],
-      ),
+    return Step1PersonalData(
+      nameController: _nameController,
+      cpfController: _cpfController,
+      rgController: _rgController,
+      birthDateController: _birthDateController,
+      registrationNumberController: _registrationNumberController,
+      companyNameController: _companyNameController,
+      affiliatedCompanyNameController: _affiliatedCompanyNameController,
+      selectedGender: _selectedGender,
+      onGenderChanged: (val) => setState(() => _selectedGender = val),
+      selectedMaritalStatus: _selectedMaritalStatus,
+      onMaritalStatusChanged: (val) => setState(() => _selectedMaritalStatus = val),
+      companyRelationship: _companyRelationship,
+      onCompanyRelationshipChanged: (val) => setState(() => _companyRelationship = val),
+      profilePhotoFile: _profilePhotoFile,
+      onPickProfilePhoto: _showPhotoPickerOptions,
+      cpfFormatter: _cpfFormatter,
+      rgFormatter: _rgFormatter,
+      dateFormatter: _dateFormatter,
+      onNext: _nextStep,
     );
   }
 
   Widget _buildStep2() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Endereço e Contatos',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.greenDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.bgLight, thickness: 1),
-          const SizedBox(height: 16),
-
-          CustomTextField(
-            label: 'CEP',
-            hintText: '00000-000',
-            suffixIcon: IconButton(
-              icon: const Icon(
-                Icons.search,
-                color: AppColors.textLight,
-                size: 18,
-              ),
-              onPressed: _searchCep,
-            ), // Reduced icon size
-            keyboardType: TextInputType.number,
-            inputFormatters: [_cepFormatter],
-            controller: _cepController,
-          ),
-          const SizedBox(height: 12),
-
-          CustomTextField(
-            label: 'Rua / Logradouro',
-            hintText: 'Ex: Quadra F Santa Maria da Codipe',
-            controller: _streetController,
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: CustomTextField(
-                  label: 'Número',
-                  hintText: 'Ex: 123',
-                  controller: _addressNumberController,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: CustomTextField(
-                  label: 'Complemento',
-                  hintText: 'Ex: Casa A',
-                  controller: _addressComplementController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: CustomTextField(
-                  label: 'Bairro',
-                  hintText: 'Ex: Santa Maria',
-                  controller: _districtController,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 1,
-                child: CustomTextField(
-                  label: 'Cidade',
-                  hintText: 'Ex: Teresina',
-                  controller: _cityController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          CustomDropdown(
-            label: 'Estado',
-            hintText: 'Selecione o Estado',
-            items: _states,
-            value: _selectedState,
-            onChanged: (val) => setState(() => _selectedState = val),
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  label: 'Tel comercial',
-                  hintText: '(00) 0000-0000',
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [_phoneFormatter],
-                  controller: _businessPhoneController,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomTextField(
-                  label: 'Tel celular',
-                  hintText: '(00) 00000-0000',
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [_phoneFormatter],
-                  controller: _mobilePhoneController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          CustomTextField(
-            label: 'Nome do Pai',
-            hintText: 'Ex: Joaquim De Souza',
-            controller: _fatherNameController,
-          ),
-          const SizedBox(height: 12),
-
-          CustomTextField(
-            label: 'Nome da Mãe',
-            hintText: 'Ex: Maria Rosa',
-            controller: _motherNameController,
-          ),
-          const SizedBox(height: 24),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [_buildPreviousButton(), _buildNextButton()],
-          ),
-        ],
-      ),
+    return Step2ContactAccess(
+      emailController: _emailController,
+      passwordController: _passwordController,
+      confirmPasswordController: _confirmPasswordController,
+      mobilePhoneController: _mobilePhoneController,
+      businessPhoneController: _businessPhoneController,
+      phoneFormatter: _phoneFormatter,
+      onPrevious: _previousStep,
+      onNext: _nextStep,
     );
   }
 
   Widget _buildStep3() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Dependentes (Opcional)',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.greenDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.bgLight, thickness: 1),
-          const SizedBox(height: 16),
-
-          Container(
-            padding: const EdgeInsets.all(16), // Reduced
-            decoration: BoxDecoration(
-              color: AppColors.bgLight.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CustomTextField(
-                  label: 'Nome do Dependente',
-                  hintText: 'Ex: Lucas Araujo',
-                  controller: _depNameController,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomTextField(
-                        label: 'Data de Nascimento',
-                        hintText: 'DD/MM/AAAA',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [_dependentDateFormatter],
-                        controller: _depBirthDateController,
-                        suffixIcon: const Icon(
-                          Icons.calendar_today_outlined,
-                          color: AppColors.textLight,
-                          size: 18, // Reduced from 20
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: CustomTextField(
-                        label: 'CPF do Dependente',
-                        hintText: '000.000.000-00',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [_dependentCpfFormatter],
-                        controller: _depCpfController,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                CustomDropdown(
-                  label: 'Sexo do Dependente',
-                  hintText: 'Selecione', // Reduced hint text
-                  items: const ['Masculino', 'Feminino', 'Outro'],
-                  value: _depSelectedGender,
-                  onChanged: (val) => setState(() => _depSelectedGender = val),
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_depNameController.text.isNotEmpty) {
-                        setState(() {
-                          _dependents.add({
-                            'nome': _depNameController.text,
-                            'nasc': _formatDateToBackend(_depBirthDateController.text),
-                            'cpf': _depCpfController.text,
-                            'sexo': _depSelectedGender ?? 'Outro',
-                          });
-                          _depNameController.clear();
-                          _depBirthDateController.clear();
-                          _depCpfController.clear();
-                          _depSelectedGender = null;
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.greenDark,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20, // Reduced
-                        vertical: 12, // Reduced
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Salvar Dependente',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ), // Reduced
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Display list of dependents
-          if (_dependents.isNotEmpty)
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.bgLight.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: AppColors.greenDark,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
-                    ),
-                    child: const Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'Nome',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'Nascimento',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            'CPF',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: Text(
-                            'Ações',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ..._dependents.asMap().entries.map((entry) {
-                    int idx = entry.key;
-                    var dep = entry.value;
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: idx == _dependents.length - 1
-                            ? const BorderRadius.vertical(
-                                bottom: Radius.circular(12),
-                              )
-                            : BorderRadius.zero,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              dep['nome'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              dep['nasc'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              dep['cpf'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _dependents.removeAt(idx);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-
-          const SizedBox(height: 24),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [_buildPreviousButton(), _buildNextButton()],
-          ),
-        ],
-      ),
+    return Step3AddressFiliation(
+      cepController: _cepController,
+      addressNumberController: _addressNumberController,
+      streetController: _streetController,
+      districtController: _districtController,
+      addressComplementController: _addressComplementController,
+      cityController: _cityController,
+      fatherNameController: _fatherNameController,
+      motherNameController: _motherNameController,
+      selectedState: _selectedState,
+      onStateChanged: (val) => setState(() => _selectedState = val),
+      onSearchCep: _searchCep,
+      cepFormatter: _cepFormatter,
+      states: _states,
+      onPrevious: _previousStep,
+      onNext: _nextStep,
     );
   }
 
   Widget _buildStep4() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Acesso e Termos',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.greenDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.bgLight, thickness: 1),
-          const SizedBox(height: 16),
-
-          CustomTextField(
-            label: 'E-mail',
-            hintText: 'Ex: antonio@email.com',
-            keyboardType: TextInputType.emailAddress,
-            controller: _emailController,
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  label: 'Senha',
-                  hintText: 'Senha',
-                  obscureText: true,
-                  controller: _passwordController,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomTextField(
-                  label: 'Confirme sua Senha',
-                  hintText: 'Senha',
-                  obscureText: true,
-                  controller: _confirmPasswordController,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // LGPD
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FFF4), // Very light green
-              border: Border.all(
-                color: AppColors.greenLight.withValues(alpha: 0.3),
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Considerando o disposto na LGPD - LEI Nº 13.709, DE 14 DE AGOSTO DE 2018, favor preencher o campo abaixo:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.greenDark,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Autorizo que a Ascesa envie, para meu conhecimento, informações sobre a administração e gestão da Associação e campanhas promocionais relacionadas aos parceiros da Ascesa. Favor, escolha o(s) meio(s):',
-                  style: TextStyle(fontSize: 13, color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 12),
-                _buildCheckboxRow('Email', _lgpdEmail, (v) => setState(() => _lgpdEmail = v!)),
-                _buildCheckboxRow('Mídias Sociais (Whatsapp e Facebook)', _lgpdSocial, (v) => setState(() => _lgpdSocial = v!)),
-                _buildCheckboxRow('SMS', _lgpdSms, (v) => setState(() => _lgpdSms = v!)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Confirmação
-          const Text(
-            'Confirmação',
-            style: TextStyle(
-              fontSize: 14, // Reduced from 16
-              fontWeight: FontWeight.bold,
-              color: AppColors.greenDark,
-            ),
-          ),
-          const SizedBox(height: 12), // Reduced from 16
-          Container(
-            padding: const EdgeInsets.all(12), // Reduced from 16
-            decoration: BoxDecoration(
-              color: AppColors.bgLight.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 20, // Reduced from 24
-                  height: 20, // Reduced from 24
-                  child: Checkbox(
-                    value: _termsConfirmed,
-                    onChanged: (val) => setState(() => _termsConfirmed = val ?? false),
-                    activeColor: AppColors.greenPrimary,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Confirmo a veracidade das informações acima e estou de acordo com a política de acesso e termos de uso da ASCESA e estou de acordo com a cobrança de R\$20 mensais.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                    ), // Reduced from 13
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPreviousButton(),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitRegistration,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.greenDark,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32, // Reduced from 40
-                    vertical: 12, // Reduced from 16
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading 
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Salvar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ), // Reduced from 16
-                    ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckboxRow(String label, bool value, ValueChanged<bool?> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: Checkbox(
-              value: value,
-              onChanged: onChanged,
-              activeColor: AppColors.greenPrimary,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNextButton() {
-    return ElevatedButton(
-      onPressed: _nextStep,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.greenDark,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 32,
-          vertical: 12,
-        ), // Reduced
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        elevation: 0,
-      ),
-      child: const Text(
-        'Próximo',
-        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Reduced
-      ),
-    );
-  }
-
-  Widget _buildPreviousButton() {
-    return TextButton(
-      onPressed: _previousStep,
-      style: TextButton.styleFrom(
-        backgroundColor: AppColors.bgLight,
-        foregroundColor: AppColors.greenDark,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 12,
-        ), // Reduced
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      child: const Text(
-        'Anterior',
-        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Reduced
-      ),
+    return Step4Dependents(
+      depNameController: _depNameController,
+      depBirthDateController: _depBirthDateController,
+      depCpfController: _depCpfController,
+      depSelectedGender: _depSelectedGender,
+      onDepGenderChanged: (val) => setState(() => _depSelectedGender = val),
+      dependents: _dependents,
+      onAddDependent: () {
+        if (_depNameController.text.isNotEmpty) {
+          setState(() {
+            _dependents.add({
+              'nome': _depNameController.text,
+              'nasc': _formatDateToBackend(_depBirthDateController.text),
+              'cpf': _depCpfController.text,
+              'sexo': _depSelectedGender ?? 'Outro',
+            });
+            _depNameController.clear();
+            _depBirthDateController.clear();
+            _depCpfController.clear();
+            _depSelectedGender = null;
+          });
+        }
+      },
+      onRemoveDependent: (idx) {
+        setState(() {
+          _dependents.removeAt(idx);
+        });
+      },
+      dependentDateFormatter: _dependentDateFormatter,
+      dependentCpfFormatter: _dependentCpfFormatter,
+      isLoading: _isLoading,
+      onPrevious: _previousStep,
+      onSubmit: _submitRegistration,
     );
   }
 }
