@@ -17,6 +17,12 @@ import 'package:ascesa/features/vitrine/presentation/controllers/vitrine_control
 import 'package:ascesa/features/vitrine/domain/usecases/get_vitrine_items.dart';
 import 'package:ascesa/features/vitrine/data/repositories/vitrine_repository_impl.dart';
 import 'package:ascesa/features/vitrine/data/datasources/vitrine_remote_data_source.dart';
+import 'package:ascesa/features/assembly/presentation/controllers/assembly_controller.dart';
+import 'package:ascesa/features/assembly/domain/usecases/get_available_votings.dart';
+import 'package:ascesa/features/assembly/domain/usecases/vote_agenda_item.dart';
+import 'package:ascesa/features/assembly/domain/usecases/vote_slate.dart';
+import 'package:ascesa/features/assembly/data/repositories/assembly_repository_impl.dart';
+import 'package:ascesa/features/assembly/data/datasources/assembly_remote_data_source.dart';
 
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
@@ -53,6 +59,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late final UserProfileController _userProfileController;
   late final FaqController _faqController;
   late final VitrineController _vitrineController;
+  late final AssemblyController _assemblyController;
 
   late User _currentUser;
   late final List<Widget> _pages;
@@ -138,19 +145,32 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     _userProfileController.fetchProfile();
 
     // Dependency Injection for FAQ
-    final faqRemoteDataSource = FaqRemoteDataSource();
+    final faqRemoteDataSource = FaqRemoteDataSource(token: widget.token);
     final faqRepository =
         FaqRepositoryImpl(remoteDataSource: faqRemoteDataSource);
     final getFaqsUseCase = GetFaqs(faqRepository);
     _faqController = FaqController(getFaqsUseCase: getFaqsUseCase);
 
     // Dependency Injection for Vitrine
-    final vitrineRemoteDataSource = VitrineRemoteDataSource();
+    final vitrineRemoteDataSource = VitrineRemoteDataSource(token: widget.token);
     final vitrineRepository =
         VitrineRepositoryImpl(remoteDataSource: vitrineRemoteDataSource);
     final getVitrineItemsUseCase = GetVitrineItems(vitrineRepository);
     _vitrineController =
         VitrineController(getVitrineItemsUseCase: getVitrineItemsUseCase);
+
+    // Dependency Injection for Assembly
+    final assemblyRemoteDataSource = AssemblyRemoteDataSource(token: widget.token);
+    final assemblyRepository =
+        AssemblyRepositoryImpl(remoteDataSource: assemblyRemoteDataSource);
+    final getAvailableVotingsUseCase = GetAvailableVotings(assemblyRepository);
+    final voteAgendaItemUseCase = VoteAgendaItem(assemblyRepository);
+    final voteSlateUseCase = VoteSlate(assemblyRepository);
+    _assemblyController = AssemblyController(
+      getAvailableVotingsUseCase: getAvailableVotingsUseCase,
+      voteAgendaItemUseCase: voteAgendaItemUseCase,
+      voteSlateUseCase: voteSlateUseCase,
+    );
 
     _pages = [
       // 0: Home
@@ -178,6 +198,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
         user: _currentUser,
         userProfileController: _userProfileController,
         faqController: _faqController,
+        assemblyController: _assemblyController,
         token: widget.token,
         userId: _currentUser.id,
       ),
@@ -246,6 +267,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               user: _currentUser,
               userProfileController: _userProfileController,
               faqController: _faqController,
+              assemblyController: _assemblyController,
               token: widget.token,
               userId: _currentUser.id,
             );

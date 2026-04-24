@@ -5,8 +5,9 @@ import 'package:ascesa/core/network/auth_interceptor.dart';
 
 class FaqRemoteDataSource {
   final Dio _dio;
+  final String token;
 
-  FaqRemoteDataSource({Dio? dio}) : _dio = dio ?? Dio(
+  FaqRemoteDataSource({Dio? dio, required this.token}) : _dio = dio ?? Dio(
     BaseOptions(
       baseUrl: ApiConstants.baseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -14,6 +15,7 @@ class FaqRemoteDataSource {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     ),
   ) {

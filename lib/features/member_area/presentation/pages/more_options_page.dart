@@ -9,11 +9,14 @@ import 'package:ascesa/features/faq/presentation/controllers/faq_controller.dart
 import 'package:ascesa/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:ascesa/features/auth/presentation/pages/login_page.dart';
 import 'package:ascesa/features/auth/domain/entities/user.dart';
+import 'package:ascesa/features/assembly/presentation/controllers/assembly_controller.dart';
+import 'package:ascesa/features/assembly/presentation/pages/assembly_list_page.dart';
 
 class MoreOptionsPage extends StatelessWidget {
   final User user;
   final UserProfileController userProfileController;
   final FaqController faqController;
+  final AssemblyController assemblyController;
   final String token;
   final String userId;
 
@@ -22,6 +25,7 @@ class MoreOptionsPage extends StatelessWidget {
     required this.user,
     required this.userProfileController,
     required this.faqController,
+    required this.assemblyController,
     required this.token,
     required this.userId,
   });
@@ -129,6 +133,30 @@ class MoreOptionsPage extends StatelessWidget {
                     },
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Section: Participação
+            _buildSectionLabel('Participação'),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: _buildOptionItem(
+                icon: Icons.how_to_vote_outlined,
+                label: 'Votações / Assembleias',
+                subtitle: 'Participe das decisões da associação',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AssemblyListPage(
+                        controller: assemblyController,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
 
