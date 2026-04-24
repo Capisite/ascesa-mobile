@@ -238,14 +238,19 @@ class MoreOptionsPage extends StatelessWidget {
           CircleAvatar(
             radius: 28,
             backgroundColor: Colors.white.withValues(alpha: 0.25),
-            child: Text(
-              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            backgroundImage: user.profilePhotoUrl != null
+                ? NetworkImage(user.profilePhotoUrl!)
+                : null,
+            child: user.profilePhotoUrl == null
+                ? Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(

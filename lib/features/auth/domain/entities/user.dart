@@ -118,7 +118,7 @@ class User {
       state: json['state'],
       maritalStatus: json['maritalStatus'] ?? json['marital_status'],
       gender: json['gender'],
-      profilePhotoUrl: json['profilePhotoUrl'] ?? json['photoUrl'],
+      profilePhotoUrl: json['profilePhotoUrl'] ?? json['profile_photo_url'],
     );
   }
 

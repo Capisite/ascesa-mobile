@@ -34,28 +34,11 @@ class UserRemoteDataSource {
     }
   }
 
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData, {String? profilePhotoPath}) async {
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData) async {
     try {
-      dynamic data;
-      
-      if (profilePhotoPath != null) {
-        data = FormData.fromMap({
-          ...userData,
-          'profilePhoto': await MultipartFile.fromFile(
-            profilePhotoPath,
-            filename: profilePhotoPath.split('/').last,
-          ),
-        });
-      } else {
-        data = userData;
-      }
-
       final response = await _dio.patch(
         ApiConstants.updateUserEndpoint,
-        data: data,
-        options: Options(
-          contentType: profilePhotoPath != null ? 'multipart/form-data' : 'application/json',
-        ),
+        data: userData,
       );
       return response.data;
     } on DioException catch (e) {

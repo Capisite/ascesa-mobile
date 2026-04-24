@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class UserProfilePage extends StatefulWidget {
   final UserProfileController controller;
@@ -16,8 +14,6 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  final _picker = ImagePicker();
-  String? _pickedImagePath;
 
   // Informações pessoais
   late TextEditingController _nameController;
@@ -104,25 +100,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       _addressComplementController.text = user.addressComplement ?? '';
       _districtController.text = user.district ?? '';
       _cityController.text = user.city ?? '';
-      if (mounted) setState(() {
-        _selectedState = _validState(user.state);
-        _pickedImagePath = null;
-      });
-    }
-  }
-
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1000,
-      maxHeight: 1000,
-      imageQuality: 85,
-    );
-
-    if (image != null) {
-      setState(() {
-        _pickedImagePath = image.path;
-      });
+      if (mounted) setState(() => _selectedState = _validState(user.state));
     }
   }
 
@@ -161,7 +139,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
         district: _districtController.text,
         city: _cityController.text,
         state: _selectedState,
-        profilePhotoPath: _pickedImagePath,
       );
 
       if (mounted) {
@@ -221,42 +198,37 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     children: [
                       // Photo Section
                       Center(
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Stack(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
+                        child: Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.greenPrimary, width: 2),
+                              ),
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundColor: AppColors.bgLight,
+                                backgroundImage: widget.controller.user.profilePhotoUrl != null
+                                    ? NetworkImage(widget.controller.user.profilePhotoUrl!)
+                                    : null,
+                                child: widget.controller.user.profilePhotoUrl == null
+                                    ? const Icon(Icons.person, size: 50, color: AppColors.textLight)
+                                    : null,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.greenPrimary,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.greenPrimary, width: 2),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: AppColors.bgLight,
-                                  backgroundImage: _pickedImagePath != null
-                                      ? FileImage(File(_pickedImagePath!))
-                                      : (widget.controller.user.profilePhotoUrl != null
-                                          ? NetworkImage(widget.controller.user.profilePhotoUrl!)
-                                          : null) as ImageProvider?,
-                                  child: _pickedImagePath == null && widget.controller.user.profilePhotoUrl == null
-                                      ? const Icon(Icons.person, size: 50, color: AppColors.textLight)
-                                      : null,
-                                ),
+                                child: const Icon(Icons.edit, color: Colors.white, size: 20),
                               ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.greenPrimary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.edit, color: Colors.white, size: 20),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 28),

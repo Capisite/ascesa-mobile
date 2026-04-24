@@ -20,6 +20,8 @@ class UserModel extends User {
     super.district,
     super.city,
     super.state,
+    super.maritalStatus,
+    super.gender,
     super.profilePhotoUrl,
   });
 
@@ -43,11 +45,12 @@ class UserModel extends User {
       district: json['district'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
-      profilePhotoUrl: json['profilePhotoUrl'] as String? ?? json['photoUrl'] as String?,
+      maritalStatus: json['maritalStatus'] as String?,
+      gender: json['gender'] as String?,
+      profilePhotoUrl: json['profilePhotoUrl'] as String?,
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -68,6 +71,8 @@ class UserModel extends User {
       'district': district,
       'city': city,
       'state': state,
+      'maritalStatus': maritalStatus,
+      'gender': gender,
       'profilePhotoUrl': profilePhotoUrl,
     };
   }

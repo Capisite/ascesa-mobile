@@ -59,50 +59,38 @@ class ConfiguracoesPage extends StatelessWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 32),
-
-            // Profile Header
+            const SizedBox(height: 24),
+            
+            // Perfil resumido
             ListenableBuilder(
               listenable: userProfileController,
               builder: (context, _) {
                 final user = userProfileController.user;
                 return Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.greenPrimary,
-                        AppColors.greenPrimary.withValues(alpha: 0.8),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.greenPrimary.withValues(alpha: 0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    color: AppColors.bgLight.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          backgroundImage: user.profilePhotoUrl != null
-                              ? NetworkImage(user.profilePhotoUrl!)
-                              : null,
-                          child: user.profilePhotoUrl == null
-                              ? const Icon(Icons.person, size: 35, color: Colors.white)
-                              : null,
-                        ),
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: AppColors.greenPrimary.withValues(alpha: 0.1),
+                        backgroundImage: user.profilePhotoUrl != null
+                            ? NetworkImage(user.profilePhotoUrl!)
+                            : null,
+                        child: user.profilePhotoUrl == null
+                            ? Text(
+                                user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.greenPrimary,
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -114,17 +102,17 @@ class ConfiguracoesPage extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColors.greenDark,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               user.email,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withValues(alpha: 0.9),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textMuted,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -135,9 +123,10 @@ class ConfiguracoesPage extends StatelessWidget {
                     ],
                   ),
                 );
-              },
+              }
             ),
-            const SizedBox(height: 32),
+            
+            const SizedBox(height: 32), 
             
             _buildSettingsItem(
               icon: Icons.person_outline,
