@@ -59,7 +59,85 @@ class ConfiguracoesPage extends StatelessWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 32), 
+            const SizedBox(height: 32),
+
+            // Profile Header
+            ListenableBuilder(
+              listenable: userProfileController,
+              builder: (context, _) {
+                final user = userProfileController.user;
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.greenPrimary,
+                        AppColors.greenPrimary.withValues(alpha: 0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.greenPrimary.withValues(alpha: 0.2),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 35,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          backgroundImage: user.profilePhotoUrl != null
+                              ? NetworkImage(user.profilePhotoUrl!)
+                              : null,
+                          child: user.profilePhotoUrl == null
+                              ? const Icon(Icons.person, size: 35, color: Colors.white)
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              user.email,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
             
             _buildSettingsItem(
               icon: Icons.person_outline,

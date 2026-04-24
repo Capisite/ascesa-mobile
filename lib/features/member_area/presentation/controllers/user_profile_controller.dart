@@ -59,6 +59,7 @@ class UserProfileController extends ChangeNotifier {
     String? district,
     String? city,
     String? state,
+    String? profilePhotoPath,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -83,7 +84,10 @@ class UserProfileController extends ChangeNotifier {
         state: state,
       );
 
-      _user = await updateUserUseCase.execute(updatedUser);
+      _user = await updateUserUseCase.execute(
+        updatedUser,
+        profilePhotoPath: profilePhotoPath,
+      );
       await authLocalDataSource.saveUser(_user);
       _successMessage = 'Perfil atualizado com sucesso!';
       _isLoading = false;

@@ -20,6 +20,7 @@ class User {
   final String? state;
   final String? maritalStatus;
   final String? gender;
+  final String? profilePhotoUrl;
 
   User({
     required this.id,
@@ -42,6 +43,7 @@ class User {
     this.state,
     this.maritalStatus,
     this.gender,
+    this.profilePhotoUrl,
   });
 
   User copyWith({
@@ -65,6 +67,7 @@ class User {
     Object? state = _sentinel,
     Object? maritalStatus = _sentinel,
     Object? gender = _sentinel,
+    Object? profilePhotoUrl = _sentinel,
   }) {
     return User(
       id: id ?? this.id,
@@ -87,6 +90,7 @@ class User {
       state: state == _sentinel ? this.state : state as String?,
       maritalStatus: maritalStatus == _sentinel ? this.maritalStatus : maritalStatus as String?,
       gender: gender == _sentinel ? this.gender : gender as String?,
+      profilePhotoUrl: profilePhotoUrl == _sentinel ? this.profilePhotoUrl : profilePhotoUrl as String?,
     );
   }
 
@@ -114,6 +118,7 @@ class User {
       state: json['state'],
       maritalStatus: json['maritalStatus'] ?? json['marital_status'],
       gender: json['gender'],
+      profilePhotoUrl: json['profilePhotoUrl'] ?? json['photoUrl'],
     );
   }
 
@@ -139,6 +144,7 @@ class User {
       'state': state,
       'maritalStatus': maritalStatus,
       'gender': gender,
+      'profilePhotoUrl': profilePhotoUrl,
     };
   }
 }

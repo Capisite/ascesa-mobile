@@ -20,6 +20,7 @@ class UserModel extends User {
     super.district,
     super.city,
     super.state,
+    super.profilePhotoUrl,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -42,9 +43,11 @@ class UserModel extends User {
       district: json['district'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
+      profilePhotoUrl: json['profilePhotoUrl'] as String? ?? json['photoUrl'] as String?,
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -65,6 +68,7 @@ class UserModel extends User {
       'district': district,
       'city': city,
       'state': state,
+      'profilePhotoUrl': profilePhotoUrl,
     };
   }
 }
