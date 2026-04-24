@@ -139,17 +139,6 @@ class _VitrineItemCardState extends State<VitrineItemCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.item.description,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                   const SizedBox(height: 12),
                   if (widget.item.price != null)
                     Text(
@@ -158,35 +147,6 @@ class _VitrineItemCardState extends State<VitrineItemCard> {
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                         color: AppColors.greenPrimary,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  if (widget.item.contactInfo != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgLight,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.phone_outlined, size: 14, color: AppColors.textMuted),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              widget.item.contactInfo!,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   const SizedBox(height: 16),

@@ -11,6 +11,7 @@ class VitrineController extends ChangeNotifier {
   String? _errorMessage;
   int _currentPage = 1;
   bool _hasMore = true;
+  String? _selectedCategory;
 
   VitrineController({required this.getVitrineItemsUseCase});
 
@@ -19,6 +20,7 @@ class VitrineController extends ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   String? get errorMessage => _errorMessage;
   bool get hasMore => _hasMore;
+  String? get selectedCategory => _selectedCategory;
 
   Future<void> fetchItems({bool refresh = false}) async {
     if (refresh) {
@@ -39,7 +41,11 @@ class VitrineController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final results = await getVitrineItemsUseCase.call(page: _currentPage, limit: 10);
+      final results = await getVitrineItemsUseCase.call(
+        page: _currentPage, 
+        limit: 10,
+        category: _selectedCategory,
+      );
       
       if (results.length < 10) {
         _hasMore = false;
@@ -59,5 +65,11 @@ class VitrineController extends ChangeNotifier {
       _isLoadingMore = false;
       notifyListeners();
     }
+  }
+
+  void setCategory(String? category) {
+    if (_selectedCategory == category) return;
+    _selectedCategory = category;
+    fetchItems(refresh: true);
   }
 }

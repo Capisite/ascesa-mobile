@@ -8,7 +8,7 @@ class VitrineRepositoryImpl implements VitrineRepository {
   VitrineRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<VitrineItem>> getVitrineItems({int page = 1, int limit = 12}) async {
-    return await remoteDataSource.getVitrineItems(page: page, limit: limit);
+  Future<List<VitrineItem>> getVitrineItems({int page = 1, int limit = 12, String? category}) async {
+    return await remoteDataSource.getVitrineItems(page: page, limit: limit, category: category);
   }
 }

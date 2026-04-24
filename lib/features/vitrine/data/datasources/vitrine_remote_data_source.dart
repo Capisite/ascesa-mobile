@@ -22,11 +22,17 @@ class VitrineRemoteDataSource {
     }
   }
 
-  Future<List<VitrineItemModel>> getVitrineItems({int page = 1, int limit = 12}) async {
+  Future<List<VitrineItemModel>> getVitrineItems({int page = 1, int limit = 12, String? category}) async {
     try {
+      final queryParams = {
+        'page': page,
+        'limit': limit,
+        if (category != null) 'category': category,
+      };
+      
       final response = await _dio.get(
         ApiConstants.vitrineEndpoint,
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: queryParams,
       );
       
       final List<dynamic> itemsJson = response.data['items'];

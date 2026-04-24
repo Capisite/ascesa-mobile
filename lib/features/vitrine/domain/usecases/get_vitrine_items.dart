@@ -6,7 +6,7 @@ class GetVitrineItems {
 
   GetVitrineItems(this.repository);
 
-  Future<List<VitrineItem>> call({int page = 1, int limit = 12}) async {
-    return await repository.getVitrineItems(page: page, limit: limit);
+  Future<List<VitrineItem>> call({int page = 1, int limit = 12, String? category}) async {
+    return await repository.getVitrineItems(page: page, limit: limit, category: category);
   }
 }
