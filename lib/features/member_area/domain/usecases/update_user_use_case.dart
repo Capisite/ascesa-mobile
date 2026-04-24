@@ -30,4 +30,13 @@ class UpdateUserUseCase {
       profilePhotoUrl: userData['profilePhotoUrl'],
     );
   }
+
+  Future<User> updatePhoto(User user, String filePath) async {
+    final response = await dataSource.updateProfilePhoto(filePath);
+    final userData = response['user'] ?? response;
+
+    return user.copyWith(
+      profilePhotoUrl: userData['profilePhotoUrl'],
+    );
+  }
 }

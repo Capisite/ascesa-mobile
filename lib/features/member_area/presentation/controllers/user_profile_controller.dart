@@ -95,6 +95,24 @@ class UserProfileController extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProfilePhoto(String filePath) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+
+    try {
+      _user = await updateUserUseCase.updatePhoto(_user, filePath);
+      await authLocalDataSource.saveUser(_user);
+      _successMessage = 'Foto de perfil atualizada!';
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void clearMessages() {
     _errorMessage = null;
     _successMessage = null;

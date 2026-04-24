@@ -47,4 +47,24 @@ class UserRemoteDataSource {
       throw Exception('Erro inesperado: $e');
     }
   }
+
+  Future<Map<String, dynamic>> updateProfilePhoto(String filePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'profilePhoto': await MultipartFile.fromFile(filePath),
+      });
+      final response = await _dio.patch(
+        ApiConstants.updateUserEndpoint,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Erro ao atualizar foto');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
 }

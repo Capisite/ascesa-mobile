@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/member_area/presentation/controllers/user_profile_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UserProfilePage extends StatefulWidget {
   final UserProfileController controller;
@@ -161,6 +162,66 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  void _handlePhotoEdit() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Alterar Foto de Perfil',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.greenDark),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: AppColors.greenPrimary),
+              title: const Text('Galeria'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppColors.greenPrimary),
+              title: const Text('Câmera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        await widget.controller.updateProfilePhoto(image.path);
+        
+        if (mounted) {
+          if (widget.controller.errorMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(widget.controller.errorMessage!), backgroundColor: Colors.red),
+            );
+          } else if (widget.controller.successMessage != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(widget.controller.successMessage!), backgroundColor: AppColors.greenPrimary),
+            );
+          }
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -198,37 +259,40 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     children: [
                       // Photo Section
                       Center(
-                        child: Stack(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.greenPrimary, width: 2),
-                              ),
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: AppColors.bgLight,
-                                backgroundImage: widget.controller.user.profilePhotoUrl != null
-                                    ? NetworkImage(widget.controller.user.profilePhotoUrl!)
-                                    : null,
-                                child: widget.controller.user.profilePhotoUrl == null
-                                    ? const Icon(Icons.person, size: 50, color: AppColors.textLight)
-                                    : null,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.greenPrimary,
+                        child: GestureDetector(
+                          onTap: isLoading ? null : _handlePhotoEdit,
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.greenPrimary, width: 2),
                                 ),
-                                child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                                child: CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: AppColors.bgLight,
+                                  backgroundImage: widget.controller.user.profilePhotoUrl != null
+                                      ? NetworkImage(widget.controller.user.profilePhotoUrl!)
+                                      : null,
+                                  child: widget.controller.user.profilePhotoUrl == null
+                                      ? const Icon(Icons.person, size: 50, color: AppColors.textLight)
+                                      : null,
+                                ),
                               ),
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.greenPrimary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 28),
