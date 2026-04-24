@@ -7,7 +7,6 @@ class ConvenioCard extends StatefulWidget {
   final String category;
   final String discount;
   final Color brandColor;
-  final String? logoUrl;
   final String? address;
   final Future<void> Function()? onOpenDiscount;
   final VoidCallback? onSeeOnMap;
@@ -18,7 +17,6 @@ class ConvenioCard extends StatefulWidget {
     required this.category,
     required this.discount,
     required this.brandColor,
-    this.logoUrl,
     this.address,
     this.onOpenDiscount,
     this.onSeeOnMap,
@@ -29,42 +27,9 @@ class ConvenioCard extends StatefulWidget {
 }
 
 class _ConvenioCardState extends State<ConvenioCard> { 
-  bool _imageLoaded = false;
-
   @override
   void initState() {
     super.initState();
-    _loadImageInfo();
-  }
-
-  @override
-  void didUpdateWidget(ConvenioCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.logoUrl != oldWidget.logoUrl) {
-      _loadImageInfo();
-    }
-  }
-
-  void _loadImageInfo() {
-    if (widget.logoUrl == null || widget.logoUrl!.isEmpty) {
-      setState(() {
-        _imageLoaded = false;
-      });
-      return;
-    }
-
-    final image = NetworkImage(widget.logoUrl!);
-    final stream = image.resolve(const ImageConfiguration());
-    
-    stream.addListener(
-      ImageStreamListener((ImageInfo info, bool synchronousCall) {
-        if (mounted) {
-          setState(() {
-            _imageLoaded = true;
-          });
-        }
-      }),
-    );
   }
 
   bool _isOpeningDiscount = false;
@@ -112,20 +77,14 @@ class _ConvenioCardState extends State<ConvenioCard> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: widget.logoUrl != null && widget.logoUrl!.isNotEmpty
-                      ? Colors.white
-                      : null,
-                  gradient:
-                      (widget.logoUrl == null || widget.logoUrl!.isEmpty)
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                widget.brandColor.withValues(alpha: 0.8),
-                                widget.brandColor
-                              ],
-                            )
-                          : null,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.brandColor.withValues(alpha: 0.8),
+                      widget.brandColor
+                    ],
+                  ),
                 ),
                 child: _buildHeaderContent(),
               ),
@@ -266,32 +225,7 @@ class _ConvenioCardState extends State<ConvenioCard> {
   }
 
   Widget _buildHeaderContent() {
-    if (widget.logoUrl == null || widget.logoUrl!.isEmpty) {
-      return _buildBrandFallback();
-    }
-
-    if (!_imageLoaded) {
-      return const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.greenPrimary,
-          ),
-        ),
-      );
-    }
-
-    // Logo Display: clean, centered and padded
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Image.network(
-        widget.logoUrl!,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => _buildBrandFallback(),
-      ),
-    );
+    return _buildBrandFallback();
   }
 
   Widget _buildBrandFallback() {
