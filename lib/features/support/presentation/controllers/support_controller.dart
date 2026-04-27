@@ -16,6 +16,7 @@ class SupportController extends ChangeNotifier {
   bool _isSending = false;
   String? _error;
   int _unreadCount = 0;
+  bool _isOnSupportPage = false;
 
   SupportController({
     required this.repository,
@@ -28,6 +29,14 @@ class SupportController extends ChangeNotifier {
   bool get isSending => _isSending;
   String? get error => _error;
   int get unreadCount => _unreadCount;
+  bool get isOnSupportPage => _isOnSupportPage;
+
+  set isOnSupportPage(bool value) {
+    _isOnSupportPage = value;
+    if (value) {
+      markAsRead();
+    }
+  }
 
   Future<void> init() async {
     if (_isLoading) return;
@@ -45,6 +54,7 @@ class SupportController extends ChangeNotifier {
       debugPrint('[SupportController] Conversa carregada: ${_messages.length} mensagens');
       
       _connectSocket();
+      await fetchUnreadCount();
     } catch (e) {
       debugPrint('[SupportController] Erro na inicialização: $e');
       _error = e.toString();
@@ -55,11 +65,23 @@ class SupportController extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchUnreadCount() async {
+    try {
+      _unreadCount = await repository.getUnreadCount();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[SupportController] Erro ao buscar unreadCount: $e');
+    }
+  }
+
   void _connectSocket() {
     socketService.connect(
       onMessageCreated: (message) {
+        // Evita duplicados por ID
+        if (_messages.any((m) => m.id == message.id)) return;
+        
         _messages.add(message);
-        if (message.sender.type == SupportSenderType.admin) {
+        if (message.sender.type == SupportSenderType.admin && !_isOnSupportPage) {
            _unreadCount++;
         }
         notifyListeners();
@@ -91,9 +113,14 @@ class SupportController extends ChangeNotifier {
     }
   }
 
-  void markAsRead() {
+  Future<void> markAsRead() async {
     _unreadCount = 0;
     notifyListeners();
+    try {
+      await repository.markAsRead();
+    } catch (e) {
+      debugPrint('[SupportController] Erro ao marcar como lido: $e');
+    }
   }
 
   @override

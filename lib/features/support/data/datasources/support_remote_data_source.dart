@@ -3,10 +3,13 @@ import 'package:ascesa/features/support/data/models/support_message_model.dart';
 import 'package:ascesa/features/support/data/models/support_ticket_model.dart';
 import 'package:dio/dio.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class SupportRemoteDataSource {
   Future<Map<String, dynamic>> getConversation({int page = 1, int limit = 50});
   Future<Map<String, dynamic>> sendMessage(String content);
+  Future<int> getUnreadCount();
+  Future<void> markAsRead();
 }
 
 class SupportRemoteDataSourceImpl implements SupportRemoteDataSource {
@@ -67,6 +70,26 @@ class SupportRemoteDataSourceImpl implements SupportRemoteDataSource {
       };
     } catch (e) {
       throw Exception('Erro ao enviar mensagem: $e');
+    }
+  }
+
+  @override
+  Future<int> getUnreadCount() async {
+    try {
+      final response = await _dio.get(ApiConstants.supportUnreadCountEndpoint);
+      return response.data['unreadCount'] ?? 0;
+    } catch (e) {
+      debugPrint('Erro ao buscar contador de mensagens não lidas: $e');
+      return 0;
+    }
+  }
+
+  @override
+  Future<void> markAsRead() async {
+    try {
+      await _dio.patch(ApiConstants.supportMarkAsReadEndpoint);
+    } catch (e) {
+      debugPrint('Erro ao marcar mensagens como lidas: $e');
     }
   }
 }

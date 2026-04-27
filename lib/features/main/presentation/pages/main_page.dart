@@ -23,6 +23,11 @@ import 'package:ascesa/features/assembly/domain/usecases/vote_agenda_item.dart';
 import 'package:ascesa/features/assembly/domain/usecases/vote_slate.dart';
 import 'package:ascesa/features/assembly/data/repositories/assembly_repository_impl.dart';
 import 'package:ascesa/features/assembly/data/datasources/assembly_remote_data_source.dart';
+import 'package:ascesa/features/support/presentation/pages/support_page.dart';
+import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
+import 'package:ascesa/features/support/data/repositories/support_repository_impl.dart';
+import 'package:ascesa/features/support/data/datasources/support_remote_data_source.dart';
+import 'package:ascesa/features/support/data/services/support_socket_service.dart';
 
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
@@ -60,6 +65,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late final FaqController _faqController;
   late final VitrineController _vitrineController;
   late final AssemblyController _assemblyController;
+  late final SupportController _supportController;
 
   late User _currentUser;
   late final List<Widget> _pages;
@@ -85,6 +91,11 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       icon: Icons.storefront_outlined,
       activeIcon: Icons.storefront_rounded,
       label: 'Vitrine',
+    ),
+    _NavItem(
+      icon: Icons.headset_mic_outlined,
+      activeIcon: Icons.headset_mic_rounded,
+      label: 'Suporte',
     ),
     _NavItem(
       icon: Icons.menu,
@@ -172,6 +183,17 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       voteSlateUseCase: voteSlateUseCase,
     );
 
+    // Dependency Injection for Support
+    final supportRemoteDataSource = SupportRemoteDataSourceImpl(token: widget.token);
+    final supportRepository = SupportRepositoryImpl(remoteDataSource: supportRemoteDataSource);
+    final supportSocketService = SupportSocketService(token: widget.token);
+    _supportController = SupportController(
+      repository: supportRepository,
+      socketService: supportSocketService,
+    );
+    _supportController.init();
+    _supportController.addListener(_onSupportUpdate);
+
     _pages = [
       // 0: Home
       HomePage(
@@ -193,12 +215,18 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       VitrinePage(
         controller: _vitrineController,
       ),
-      // 4: Mais opções
+      // 4: Suporte
+      SupportPage(
+        controller: _supportController,
+        userId: _currentUser.id,
+      ),
+      // 5: Mais opções
       MoreOptionsPage(
         user: _currentUser,
         userProfileController: _userProfileController,
         faqController: _faqController,
         assemblyController: _assemblyController,
+        supportController: _supportController,
         token: widget.token,
         userId: _currentUser.id,
       ),
@@ -263,11 +291,12 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               },
             );
             // Rebuild MoreOptionsPage with updated user
-            _pages[4] = MoreOptionsPage(
+            _pages[5] = MoreOptionsPage(
               user: _currentUser,
               userProfileController: _userProfileController,
               faqController: _faqController,
               assemblyController: _assemblyController,
+              supportController: _supportController,
               token: widget.token,
               userId: _currentUser.id,
             );
@@ -277,10 +306,19 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     }
   }
 
+  void _onSupportUpdate([dynamic arg1, dynamic arg2]) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
   @override
   void dispose() {
     NotificationService.onNotificationTapped = null;
     _userProfileController.removeListener(_onUserProfileUpdated);
+    _supportController.removeListener(_onSupportUpdate);
     super.dispose();
   }
 
@@ -355,16 +393,45 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isSelected ? item.activeIcon : item.icon,
-                  key: ValueKey(isSelected),
-                  color: isSelected
-                      ? AppColors.greenPrimary
-                      : AppColors.textMuted,
-                  size: isMoreButton ? 26 : 24,
-                ),
+              Stack(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      isSelected ? item.activeIcon : item.icon,
+                      key: ValueKey(isSelected),
+                      color: isSelected
+                          ? AppColors.greenPrimary
+                          : AppColors.textMuted,
+                      size: isMoreButton ? 26 : 24,
+                    ),
+                  ),
+                  if (item.label == 'Suporte' && _supportController.unreadCount > 0)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${_supportController.unreadCount > 9 ? '9+' : _supportController.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(

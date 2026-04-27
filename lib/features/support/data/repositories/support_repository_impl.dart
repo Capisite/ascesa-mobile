@@ -17,4 +17,14 @@ class SupportRepositoryImpl implements SupportRepository {
   Future<Map<String, dynamic>> sendMessage(String content) async {
     return await remoteDataSource.sendMessage(content);
   }
+
+  @override
+  Future<int> getUnreadCount() async {
+    return await remoteDataSource.getUnreadCount();
+  }
+
+  @override
+  Future<void> markAsRead() async {
+    await remoteDataSource.markAsRead();
+  }
 }

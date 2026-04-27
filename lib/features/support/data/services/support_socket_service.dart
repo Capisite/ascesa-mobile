@@ -28,6 +28,7 @@ class SupportSocketService {
     _socket!.onDisconnect((_) => print('Disconnected from support-chat socket'));
 
     if (onMessageCreated != null) {
+      _socket!.off('support:message-created');
       _socket!.on('support:message-created', (data) {
         if (data != null && data['message'] != null) {
           onMessageCreated(SupportMessageModel.fromJson(data['message']));
@@ -36,6 +37,7 @@ class SupportSocketService {
     }
 
     if (onTicketUpsert != null) {
+      _socket!.off('support:ticket-upsert');
       _socket!.on('support:ticket-upsert', (data) {
         if (data != null) {
           onTicketUpsert(SupportTicketModel.fromJson(data));

@@ -11,12 +11,15 @@ import 'package:ascesa/features/auth/presentation/pages/login_page.dart';
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/assembly/presentation/controllers/assembly_controller.dart';
 import 'package:ascesa/features/assembly/presentation/pages/assembly_list_page.dart';
+import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
+import 'package:ascesa/features/support/presentation/pages/support_page.dart';
 
 class MoreOptionsPage extends StatelessWidget {
   final User user;
   final UserProfileController userProfileController;
   final FaqController faqController;
   final AssemblyController assemblyController;
+  final SupportController supportController;
   final String token;
   final String userId;
 
@@ -26,6 +29,7 @@ class MoreOptionsPage extends StatelessWidget {
     required this.userProfileController,
     required this.faqController,
     required this.assemblyController,
+    required this.supportController,
     required this.token,
     required this.userId,
   });
@@ -167,21 +171,42 @@ class MoreOptionsPage extends StatelessWidget {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildOptionItem(
-                icon: Icons.help_outline,
-                label: 'FAQ',
-                subtitle: 'Perguntas frequentes',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FaqPage(
-                        controller: faqController,
-                        userId: userId,
-                      ),
-                    ),
-                  );
-                },
+              child: Column(
+                children: [
+                  _buildOptionItem(
+                    icon: Icons.help_outline,
+                    label: 'FAQ',
+                    subtitle: 'Perguntas frequentes',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FaqPage(
+                            controller: faqController,
+                            userId: userId,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildOptionItem(
+                    icon: Icons.headset_mic_outlined,
+                    label: 'Suporte',
+                    subtitle: 'Fale com nossa equipe',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SupportPage(
+                            controller: supportController,
+                            userId: userId,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
 
