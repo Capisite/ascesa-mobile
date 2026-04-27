@@ -45,4 +45,37 @@ class VitrineRemoteDataSource {
       throw Exception('Erro inesperado: $e');
     }
   }
+
+  Future<void> createVitrineItem(Map<String, dynamic> data) async {
+    try {
+      final formData = FormData.fromMap({
+        'title': data['title'],
+        'description': data['description'],
+        if (data['price'] != null) 'price': data['price'],
+        if (data['category'] != null) 'category': data['category'],
+        if (data['contactInfo'] != null) 'contactInfo': data['contactInfo'],
+      });
+
+      if (data['images'] != null && data['images'] is List) {
+        for (var imagePath in data['images']) {
+          formData.files.add(MapEntry(
+            'images',
+            await MultipartFile.fromFile(imagePath, filename: imagePath.split('/').last),
+          ));
+        }
+      }
+
+      await _dio.post(
+        ApiConstants.vitrineEndpoint,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Erro ao criar item na vitrine');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
 }

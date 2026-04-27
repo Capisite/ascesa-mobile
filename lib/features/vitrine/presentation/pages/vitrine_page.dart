@@ -3,6 +3,7 @@ import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/vitrine/presentation/controllers/vitrine_controller.dart';
 import 'package:ascesa/features/vitrine/presentation/widgets/vitrine_item_card.dart';
 import 'package:ascesa/features/vitrine/presentation/pages/vitrine_detail_page.dart';
+import 'package:ascesa/features/vitrine/presentation/pages/vitrine_create_page.dart';
 
 class VitrinePage extends StatefulWidget {
   final VitrineController controller;

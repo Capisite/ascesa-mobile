@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:ascesa/features/vitrine/domain/entities/vitrine_item.dart';
 import 'package:ascesa/features/vitrine/domain/usecases/get_vitrine_items.dart';
+import 'package:ascesa/features/vitrine/domain/usecases/create_vitrine_item.dart';
 
 class VitrineController extends ChangeNotifier {
   final GetVitrineItems getVitrineItemsUseCase;
+  final CreateVitrineItem? createVitrineItemUseCase;
 
   List<VitrineItem> _items = [];
   bool _isLoading = false;
@@ -12,8 +14,13 @@ class VitrineController extends ChangeNotifier {
   int _currentPage = 1;
   bool _hasMore = true;
   String? _selectedCategory;
+  bool _isCreating = false;
+  String? _createError;
 
-  VitrineController({required this.getVitrineItemsUseCase});
+  VitrineController({
+    required this.getVitrineItemsUseCase,
+    this.createVitrineItemUseCase,
+  });
 
   List<VitrineItem> get items => _items;
   bool get isLoading => _isLoading;
@@ -21,6 +28,8 @@ class VitrineController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasMore => _hasMore;
   String? get selectedCategory => _selectedCategory;
+  bool get isCreating => _isCreating;
+  String? get createError => _createError;
 
   Future<void> fetchItems({bool refresh = false}) async {
     if (refresh) {
@@ -71,5 +80,25 @@ class VitrineController extends ChangeNotifier {
     if (_selectedCategory == category) return;
     _selectedCategory = category;
     fetchItems(refresh: true);
+  }
+
+  Future<bool> createItem(Map<String, dynamic> data) async {
+    if (createVitrineItemUseCase == null) return false;
+
+    _isCreating = true;
+    _createError = null;
+    notifyListeners();
+
+    try {
+      await createVitrineItemUseCase!.call(data);
+      _isCreating = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _createError = e.toString();
+      _isCreating = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

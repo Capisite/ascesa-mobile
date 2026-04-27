@@ -11,4 +11,9 @@ class VitrineRepositoryImpl implements VitrineRepository {
   Future<List<VitrineItem>> getVitrineItems({int page = 1, int limit = 12, String? category}) async {
     return await remoteDataSource.getVitrineItems(page: page, limit: limit, category: category);
   }
+
+  @override
+  Future<void> createVitrineItem(Map<String, dynamic> data) async {
+    return await remoteDataSource.createVitrineItem(data);
+  }
 }

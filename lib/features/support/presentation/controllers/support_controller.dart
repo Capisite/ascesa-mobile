@@ -3,8 +3,6 @@ import 'package:ascesa/features/support/domain/repositories/support_repository.d
 import 'package:ascesa/features/support/data/services/support_socket_service.dart';
 import 'package:ascesa/features/support/domain/entities/support_message.dart';
 import 'package:ascesa/features/support/domain/entities/support_ticket.dart';
-import 'package:ascesa/features/support/data/models/support_message_model.dart';
-import 'package:ascesa/features/support/data/models/support_ticket_model.dart';
 
 class SupportController extends ChangeNotifier {
   final SupportRepository repository;

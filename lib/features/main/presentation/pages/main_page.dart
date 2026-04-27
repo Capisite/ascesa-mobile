@@ -15,6 +15,7 @@ import 'package:ascesa/features/faq/data/datasources/faq_remote_data_source.dart
 import 'package:ascesa/features/vitrine/presentation/pages/vitrine_page.dart';
 import 'package:ascesa/features/vitrine/presentation/controllers/vitrine_controller.dart';
 import 'package:ascesa/features/vitrine/domain/usecases/get_vitrine_items.dart';
+import 'package:ascesa/features/vitrine/domain/usecases/create_vitrine_item.dart';
 import 'package:ascesa/features/vitrine/data/repositories/vitrine_repository_impl.dart';
 import 'package:ascesa/features/vitrine/data/datasources/vitrine_remote_data_source.dart';
 import 'package:ascesa/features/assembly/presentation/controllers/assembly_controller.dart';
@@ -93,11 +94,6 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       label: 'Vitrine',
     ),
     _NavItem(
-      icon: Icons.headset_mic_outlined,
-      activeIcon: Icons.headset_mic_rounded,
-      label: 'Suporte',
-    ),
-    _NavItem(
       icon: Icons.menu,
       activeIcon: Icons.menu,
       label: 'Mais',
@@ -167,8 +163,11 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     final vitrineRepository =
         VitrineRepositoryImpl(remoteDataSource: vitrineRemoteDataSource);
     final getVitrineItemsUseCase = GetVitrineItems(vitrineRepository);
-    _vitrineController =
-        VitrineController(getVitrineItemsUseCase: getVitrineItemsUseCase);
+    final createVitrineItemUseCase = CreateVitrineItem(vitrineRepository);
+    _vitrineController = VitrineController(
+      getVitrineItemsUseCase: getVitrineItemsUseCase,
+      createVitrineItemUseCase: createVitrineItemUseCase,
+    );
 
     // Dependency Injection for Assembly
     final assemblyRemoteDataSource = AssemblyRemoteDataSource(token: widget.token);
@@ -215,18 +214,14 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       VitrinePage(
         controller: _vitrineController,
       ),
-      // 4: Suporte
-      SupportPage(
-        controller: _supportController,
-        userId: _currentUser.id,
-      ),
-      // 5: Mais opções
+      // 4: Mais opções
       MoreOptionsPage(
         user: _currentUser,
         userProfileController: _userProfileController,
         faqController: _faqController,
         assemblyController: _assemblyController,
         supportController: _supportController,
+        vitrineController: _vitrineController,
         token: widget.token,
         userId: _currentUser.id,
       ),
@@ -291,12 +286,13 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               },
             );
             // Rebuild MoreOptionsPage with updated user
-            _pages[5] = MoreOptionsPage(
+            _pages[4] = MoreOptionsPage(
               user: _currentUser,
               userProfileController: _userProfileController,
               faqController: _faqController,
               assemblyController: _assemblyController,
               supportController: _supportController,
+              vitrineController: _vitrineController,
               token: widget.token,
               userId: _currentUser.id,
             );
@@ -406,31 +402,6 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       size: isMoreButton ? 26 : 24,
                     ),
                   ),
-                  if (item.label == 'Suporte' && _supportController.unreadCount > 0)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '${_supportController.unreadCount > 9 ? '9+' : _supportController.unreadCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
                 ],
               ),
               const SizedBox(height: 4),

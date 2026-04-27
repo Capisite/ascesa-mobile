@@ -1,7 +1,5 @@
 import 'package:ascesa/features/support/domain/repositories/support_repository.dart';
 import 'package:ascesa/features/support/data/datasources/support_remote_data_source.dart';
-import 'package:ascesa/features/support/domain/entities/support_message.dart';
-import 'package:ascesa/features/support/domain/entities/support_ticket.dart';
 
 class SupportRepositoryImpl implements SupportRepository {
   final SupportRemoteDataSource remoteDataSource;

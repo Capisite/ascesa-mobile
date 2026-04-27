@@ -13,6 +13,8 @@ import 'package:ascesa/features/assembly/presentation/controllers/assembly_contr
 import 'package:ascesa/features/assembly/presentation/pages/assembly_list_page.dart';
 import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
 import 'package:ascesa/features/support/presentation/pages/support_page.dart';
+import 'package:ascesa/features/vitrine/presentation/controllers/vitrine_controller.dart';
+import 'package:ascesa/features/vitrine/presentation/pages/vitrine_create_page.dart';
 
 class MoreOptionsPage extends StatelessWidget {
   final User user;
@@ -20,6 +22,7 @@ class MoreOptionsPage extends StatelessWidget {
   final FaqController faqController;
   final AssemblyController assemblyController;
   final SupportController supportController;
+  final VitrineController vitrineController;
   final String token;
   final String userId;
 
@@ -30,6 +33,7 @@ class MoreOptionsPage extends StatelessWidget {
     required this.faqController,
     required this.assemblyController,
     required this.supportController,
+    required this.vitrineController,
     required this.token,
     required this.userId,
   });
@@ -147,20 +151,40 @@ class MoreOptionsPage extends StatelessWidget {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildOptionItem(
-                icon: Icons.how_to_vote_outlined,
-                label: 'Votações / Assembleias',
-                subtitle: 'Participe das decisões da associação',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AssemblyListPage(
-                        controller: assemblyController,
-                      ),
-                    ),
-                  );
-                },
+              child: Column(
+                children: [
+                  _buildOptionItem(
+                    icon: Icons.how_to_vote_outlined,
+                    label: 'Votações / Assembleias',
+                    subtitle: 'Participe das decisões da associação',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AssemblyListPage(
+                            controller: assemblyController,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildOptionItem(
+                    icon: Icons.add_business_outlined,
+                    label: 'Anunciar na Vitrine',
+                    subtitle: 'Divulgue seus produtos ou serviços',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VitrineCreatePage(
+                            controller: vitrineController,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
 
