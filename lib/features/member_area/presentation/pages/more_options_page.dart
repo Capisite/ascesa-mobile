@@ -15,6 +15,7 @@ import 'package:ascesa/features/support/presentation/controllers/support_control
 import 'package:ascesa/features/support/presentation/pages/support_page.dart';
 import 'package:ascesa/features/vitrine/presentation/controllers/vitrine_controller.dart';
 import 'package:ascesa/features/vitrine/presentation/pages/vitrine_create_page.dart';
+import 'package:ascesa/features/blog/presentation/pages/blog_page.dart';
 
 class MoreOptionsPage extends StatelessWidget {
   final User user;
@@ -180,6 +181,20 @@ class MoreOptionsPage extends StatelessWidget {
                           builder: (context) => VitrineCreatePage(
                             controller: vitrineController,
                           ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildOptionItem(
+                    icon: Icons.rss_feed_rounded,
+                    label: 'Blog ASCESA',
+                    subtitle: 'Confira nossos artigos e conteúdos',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlogPage(token: token),
                         ),
                       );
                     },

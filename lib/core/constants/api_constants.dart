@@ -18,7 +18,9 @@ class ApiConstants {
   static const String supportMarkAsReadEndpoint = '/support-chat/my-conversation/read';
   static const String faqEndpoint = '/faq';
   static const String vitrineEndpoint = '/virtual-showcase';
+  static const String blogEndpoint = '/blogs';
 
   static String partnerAccessEndpoint(String partnerId) =>
+
       '/allya/partners/$partnerId/access';
 }

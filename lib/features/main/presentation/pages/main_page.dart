@@ -94,6 +94,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       activeIcon: Icons.storefront_rounded,
       label: 'Vitrine',
     ),
+
     _NavItem(
       icon: Icons.menu,
       activeIcon: Icons.menu,
