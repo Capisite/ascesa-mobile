@@ -147,12 +147,26 @@ class _AssemblyVotingPageState extends State<AssemblyVotingPage> {
                   icon: Icons.check_circle_outline,
                   color: Colors.green,
                   isSelected: isApproved,
-                  onTap: () => widget.controller.castAgendaVote(
-                    assemblyId: assemblyId,
-                    agendaItemId: item.id,
-                    decision: 'APPROVED',
-                    type: type,
-                  ),
+                  onTap: () {
+                    if (item.myDecision != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Seu voto já foi registrado e não pode ser alterado.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    _showConfirmationDialog(
+                      message: "Confirma seu voto em 'Aprovar'? Após confirmar, não será possível alterar.",
+                      onConfirm: () => widget.controller.castAgendaVote(
+                        assemblyId: assemblyId,
+                        agendaItemId: item.id,
+                        decision: 'APPROVED',
+                        type: type,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -162,12 +176,26 @@ class _AssemblyVotingPageState extends State<AssemblyVotingPage> {
                   icon: Icons.cancel_outlined,
                   color: Colors.red,
                   isSelected: isNotApproved,
-                  onTap: () => widget.controller.castAgendaVote(
-                    assemblyId: assemblyId,
-                    agendaItemId: item.id,
-                    decision: 'NOT_APPROVED',
-                    type: type,
-                  ),
+                  onTap: () {
+                    if (item.myDecision != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Seu voto já foi registrado e não pode ser alterado.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    _showConfirmationDialog(
+                      message: "Confirma seu voto em 'Não aprovar'? Após confirmar, não será possível alterar.",
+                      onConfirm: () => widget.controller.castAgendaVote(
+                        assemblyId: assemblyId,
+                        agendaItemId: item.id,
+                        decision: 'NOT_APPROVED',
+                        type: type,
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -217,10 +245,24 @@ class _AssemblyVotingPageState extends State<AssemblyVotingPage> {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          onTap: () => widget.controller.castSlateVote(
-            assemblyId: assemblyId,
-            slateId: slate.id,
-          ),
+          onTap: () {
+            if (mySlateId != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Seu voto já foi registrado e não pode ser alterado.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+            _showConfirmationDialog(
+              message: "Confirma seu voto na chapa ${slate.number} - ${slate.name}? Após confirmar, não será possível alterar.",
+              onConfirm: () => widget.controller.castSlateVote(
+                assemblyId: assemblyId,
+                slateId: slate.id,
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -262,6 +304,21 @@ class _AssemblyVotingPageState extends State<AssemblyVotingPage> {
                           slate.slogan,
                           style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                         ),
+                      if (slate.participants != null && slate.participants!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => _showParticipantsDialog(slate),
+                          child: const Text(
+                            'Ver participantes',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.greenPrimary,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -320,4 +377,72 @@ class _AssemblyVotingPageState extends State<AssemblyVotingPage> {
       return AppColors.greenPrimary;
     }
   }
+  void _showConfirmationDialog({
+    required String message,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Voto'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.greenPrimary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+
+        ],
+      ),
+    );
+  }
+
+  void _showParticipantsDialog(Slate slate) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Membros da Chapa ${slate.number}'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: slate.participants == null || slate.participants!.isEmpty
+              ? const Text('Nenhum participante cadastrado.')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: slate.participants!.length,
+                  itemBuilder: (context, index) {
+                    final p = slate.participants![index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: p.photoUrl.isNotEmpty ? NetworkImage(p.photoUrl) : null,
+                        child: p.photoUrl.isEmpty ? const Icon(Icons.person) : null,
+                      ),
+                      title: Text(p.name),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
