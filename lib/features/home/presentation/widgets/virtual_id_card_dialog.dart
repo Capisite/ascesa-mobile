@@ -64,8 +64,9 @@ class _VirtualIdCardDialogState extends State<VirtualIdCardDialog> {
   Widget build(BuildContext context) {
     final user = widget.user;
     final String validationUrl = _cardToken != null 
-        ? 'http://localhost:3000/validar-carteirinha/$_cardToken'
-        : 'http://localhost:3000/validar-carteirinha/${user.id}';
+        ? 'https://ascesa.com.br/validar-carteirinha/$_cardToken'
+        : 'https://ascesa.com.br/validar-carteirinha/${user.id}';
+
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
