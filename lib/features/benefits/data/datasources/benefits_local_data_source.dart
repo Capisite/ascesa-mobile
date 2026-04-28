@@ -19,7 +19,7 @@ class BenefitsLocalDataSource {
     
     if (jsonString != null) {
       final List<dynamic> jsonList = jsonDecode(jsonString);
-      return jsonList.map((json) => PartnerModel.fromJson(json)).toList();
+      return jsonList.map<PartnerModel>((json) => PartnerModel.fromJson(json as Map<String, dynamic>)).toList();
     }
     
     return [];

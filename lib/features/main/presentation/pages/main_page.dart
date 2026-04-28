@@ -33,6 +33,7 @@ import 'package:ascesa/features/support/data/services/support_socket_service.dar
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 import 'package:ascesa/features/benefits/presentation/controllers/benefits_controller.dart';
 import 'package:ascesa/features/benefits/domain/usecases/get_partners_by_category_use_case.dart';
+import 'package:ascesa/features/benefits/domain/usecases/get_map_partners_use_case.dart';
 import 'package:ascesa/features/benefits/data/repositories/benefits_repository_impl.dart';
 import 'package:ascesa/features/benefits/data/datasources/benefits_remote_data_source.dart';
 import 'package:ascesa/features/benefits/data/datasources/benefits_local_data_source.dart';
@@ -128,11 +129,15 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
     final getPartnersUseCase =
         GetPartnersByCategoryUseCase(repository: benefitsRepository);
+    final getMapPartnersUseCase =
+        GetMapPartnersUseCase(repository: benefitsRepository);
     _benefitsController = BenefitsController(
       getPartnersUseCase: getPartnersUseCase,
+      getMapPartnersUseCase: getMapPartnersUseCase,
       remoteDataSource: benefitsRemoteDataSource,
     );
-    _benefitsController.fetchAllPartners();
+    _benefitsController.fetchPartners(reset: true);
+    _benefitsController.fetchMapPartners();
 
     // Dependency Injection for User Profile
     final userRemoteDataSource = UserRemoteDataSource(token: widget.token);

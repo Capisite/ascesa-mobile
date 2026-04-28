@@ -32,7 +32,7 @@ class PartnerModel extends Partner {
           ? PartnerOfferModel.fromJson(json['offer'])
           : null,
       addressess: (json['addressess'] as List? ?? [])
-          .map((a) => PartnerAddressModel.fromJson(a))
+          .map<PartnerAddressModel>((a) => PartnerAddressModel.fromJson(a as Map<String, dynamic>))
           .toList(),
       link: json['link'],
       categoryId: json['categoryId'] ?? '',
@@ -132,7 +132,7 @@ class PartnerLocationModel extends PartnerLocation {
     return PartnerLocationModel(
       type: json['type'] ?? 'Point',
       coordinates: (json['coordinates'] as List? ?? [])
-          .map((e) => (e as num).toDouble())
+          .map<double>((e) => (e as num).toDouble())
           .toList(),
     );
   }

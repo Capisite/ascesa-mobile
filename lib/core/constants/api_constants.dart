@@ -1,12 +1,14 @@
 class ApiConstants {
   // Use http://10.0.2.2:5000 para Android Emulator
   // Use http://localhost:5000 para iOS ou Web
-  static const String baseUrl = 'https://ascesa-back.onrender.com';
+  //static const String baseUrl = 'https://ascesa-back.onrender.com';
+  static const String baseUrl = 'http://10.0.2.2:5000';
   static const String loginEndpoint = '/auth/login';
   static const String updateUserEndpoint = '/users/me';
   static const String registerEndpoint = '/auth/register';
   static const String categoriesEndpoint = '/allya/categories';
-  static const String partnersEndpoint = '/allya/partners';
+  static const String publicInfoEndpoint = '/allya/public-info';
+  static const String publicInfoMapEndpoint = '/allya/public-info/map';
   static const String newsEndpoint = '/news';
   static const String forgotPasswordEndpoint = '/auth/forgot-password';
   static const String dependentsEndpoint = '/dependents';

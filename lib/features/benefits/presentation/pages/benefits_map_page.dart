@@ -44,6 +44,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
   final MapController _mapController = MapController();
   final SettingsService _settingsService = SettingsService();
   List<Marker> _markers = [];
+  List<_PartnerAddressWithDistance> _allAddresses = [];
   Partner? _selectedPartner;
   PartnerAddress? _selectedAddress;
   LatLng? _currentUserPosition;
@@ -61,6 +62,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
   double _pendingZoom = 14.0;
 
   static const LatLng _initialPosition = LatLng(-15.7942, -47.8822); // Brasília default
+  static const int _maxMarkersOnScreen = 1000;
 
   @override
   void initState() {
@@ -97,7 +99,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
 
   Future<void> _loadSettingsAndMarkers() async {
     _isPerformanceModeEnabled = await _settingsService.isPerformanceModeEnabled();
-    _loadMarkers();
+    _loadAllAddresses();
   }
 
   @override
@@ -132,7 +134,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
       setState(() {
         _currentUserPosition = pos;
       });
-      _loadMarkers();
+      _loadAllAddresses();
       if (widget.initialPartner == null) {
         _safeMove(pos, 14.0);
       }
@@ -151,7 +153,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         setState(() {
           _currentUserPosition = pos;
         });
-        _loadMarkers();
+        _loadAllAddresses();
         if (widget.initialPartner == null) {
           _safeMove(pos, 14.0);
         }
@@ -173,7 +175,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
         setState(() {
           _currentUserPosition = newPos;
         });
-        _loadMarkers();
+        _loadAllAddresses();
         if (widget.initialPartner == null) {
           _safeMove(newPos, _mapReady ? _mapController.camera.zoom : 14.0);
         }
@@ -181,9 +183,9 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
     });
   }
 
-  void _loadMarkers() {
-    List<Partner> partners = widget.benefitsController.partners;
-    final List<Marker> newMarkers = [];
+  void _loadAllAddresses() {
+    List<Partner> partners = widget.benefitsController.mapPartners;
+    final List<_PartnerAddressWithDistance> newAddresses = [];
 
     if (_isPerformanceModeEnabled && _currentUserPosition != null) {
       List<_PartnerAddressWithDistance> sortedList = [];
@@ -213,19 +215,46 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
       }
 
       sortedList.sort((a, b) => a.distance.compareTo(b.distance));
-      final top20 = sortedList.take(20).toList();
-
-      for (var item in top20) {
-        newMarkers.add(_buildMarker(item.partner, item.address, item.lat, item.lng));
-      }
+      newAddresses.addAll(sortedList.take(20));
     } else {
       for (var partner in partners) {
         for (var address in partner.addressess) {
           if (address.location != null && address.location!.coordinates.length >= 2) {
             final lat = address.location!.coordinates[1];
             final lng = address.location!.coordinates[0];
-            newMarkers.add(_buildMarker(partner, address, lat, lng));
+            newAddresses.add(_PartnerAddressWithDistance(
+              partner: partner,
+              address: address,
+              distance: 0.0,
+              lat: lat,
+              lng: lng,
+            ));
           }
+        }
+      }
+    }
+
+    _allAddresses = newAddresses;
+
+    // Se o mapa já está pronto, atualizamos imediatamente
+    if (_mapReady) {
+      _updateVisibleMarkers(_mapController.camera);
+    }
+  }
+
+  void _updateVisibleMarkers(MapCamera camera) {
+    if (_allAddresses.isEmpty) return;
+
+    final bounds = camera.visibleBounds;
+    final List<Marker> newMarkers = [];
+    int count = 0;
+
+    for (var item in _allAddresses) {
+      if (bounds.contains(LatLng(item.lat, item.lng))) {
+        newMarkers.add(_buildMarker(item.partner, item.address, item.lat, item.lng));
+        count++;
+        if (count >= _maxMarkersOnScreen) {
+          break; // Avoid rendering too many markers and freezing the app
         }
       }
     }
@@ -419,6 +448,9 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
           options: MapOptions(
             initialCenter: _initialPosition,
             initialZoom: 12.0,
+            onPositionChanged: (camera, hasGesture) {
+              _updateVisibleMarkers(camera);
+            },
             onMapReady: () {
               setState(() => _mapReady = true);
               // Aplica movimento pendente (posição que chegou antes do mapa renderizar)
@@ -426,6 +458,7 @@ class _BenefitsMapPageState extends State<BenefitsMapPage> {
                 _mapController.move(_pendingMove!, _pendingZoom);
                 _pendingMove = null;
               }
+              _updateVisibleMarkers(_mapController.camera);
             },
             onTap: (_, __) {
               setState(() {

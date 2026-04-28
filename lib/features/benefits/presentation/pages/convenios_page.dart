@@ -23,8 +23,19 @@ class ConveniosPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      body: CustomScrollView(
-        slivers: [
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification scrollInfo) {
+          if (!benefitsController.isLoading &&
+              !benefitsController.isLoadingMore &&
+              benefitsController.hasMore &&
+              scrollInfo.metrics.pixels >=
+                  scrollInfo.metrics.maxScrollExtent - 200) {
+            benefitsController.fetchPartners();
+          }
+          return false;
+        },
+        child: CustomScrollView(
+          slivers: [
           const ConveniosHeader(),
 
           SliverToBoxAdapter(
@@ -104,7 +115,7 @@ class ConveniosPage extends StatelessWidget {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    benefitsController.fetchAllPartners();
+                                    benefitsController.fetchPartners(reset: true);
                                   },
                                   child: const Text('Tentar novamente'),
                                 ),
@@ -157,6 +168,13 @@ class ConveniosPage extends StatelessWidget {
                             );
                           },
                         ),
+                        if (benefitsController.isLoadingMore)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(
+                              child: CircularProgressIndicator(color: AppColors.greenPrimary),
+                            ),
+                          ),
                     ],
                   );
                 },
@@ -164,6 +182,7 @@ class ConveniosPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'benefits_map_fab',

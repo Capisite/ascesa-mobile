@@ -91,6 +91,10 @@ class _LoginPageState extends State<LoginPage> {
       return 'E-mail ou senha inválidos.';
     }
     
+    if (lowerError.contains('account pending approval')) {
+      return 'Sua conta está aguardando aprovação.';
+    }
+    
     if (lowerError.contains('password must be longer than')) {
       // Tenta extrair o número se existir, ex: "password must be longer than 6 characters"
       final match = RegExp(r'\d+').firstMatch(error);

@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/faq/presentation/controllers/faq_controller.dart';
 import 'package:ascesa/features/faq/presentation/widgets/faq_item_widget.dart';
+import 'package:ascesa/features/support/presentation/controllers/support_controller.dart';
+import 'package:ascesa/features/support/presentation/pages/support_page.dart';
 
 class FaqPage extends StatefulWidget {
   final FaqController controller;
   final String userId;
+  final SupportController supportController;
 
   const FaqPage({
     super.key,
     required this.controller,
     required this.userId,
+    required this.supportController,
   });
 
   @override
@@ -65,7 +69,9 @@ class _FaqPageState extends State<FaqPage> {
         listenable: widget.controller,
         builder: (context, _) {
           if (widget.controller.isLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.greenPrimary));
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.greenPrimary),
+            );
           }
 
           if (widget.controller.errorMessage != null) {
@@ -116,7 +122,9 @@ class _FaqPageState extends State<FaqPage> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppColors.greenPrimary.withValues(alpha: 0.1),
+                              color: AppColors.greenPrimary.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -153,48 +161,65 @@ class _FaqPageState extends State<FaqPage> {
   }
 
   Widget _buildSupportCTA() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: AppColors.greenDark,
-        borderRadius: BorderRadius.circular(32),
-        gradient: const LinearGradient(
-          colors: [AppColors.greenDark, Color(0xFF0F2A16)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SupportPage(
+              controller: widget.supportController,
+              userId: widget.userId,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.greenDark,
+          borderRadius: BorderRadius.circular(32),
+          gradient: const LinearGradient(
+            colors: [AppColors.greenDark, Color(0xFF0F2A16)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.headset_mic_outlined,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
-            child: const Icon(Icons.headset_mic_outlined, color: Colors.white, size: 32),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Sua dúvida não está aqui?',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            const SizedBox(height: 24),
+            const Text(
+              'Sua dúvida não está aqui?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Nossa equipe de suporte está pronta para atender você e resolver qualquer pendência.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white70,
-              height: 1.4,
+            const SizedBox(height: 12),
+            const Text(
+              'Nossa equipe de suporte está pronta para atender você e resolver qualquer pendência.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white70,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

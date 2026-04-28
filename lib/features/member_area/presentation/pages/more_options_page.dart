@@ -208,6 +208,7 @@ class MoreOptionsPage extends StatelessWidget {
                           builder: (context) => FaqPage(
                             controller: faqController,
                             userId: userId,
+                            supportController: supportController,
                           ),
                         ),
                       );

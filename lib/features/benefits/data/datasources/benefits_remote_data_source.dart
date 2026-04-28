@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:ascesa/core/constants/api_constants.dart';
 import 'package:ascesa/features/benefits/data/models/partner_model.dart';
+import 'package:ascesa/features/benefits/data/models/partner_catalog_page_model.dart';
 import 'package:ascesa/core/network/auth_interceptor.dart';
 
 class BenefitsRemoteDataSource {
@@ -24,29 +25,56 @@ class BenefitsRemoteDataSource {
     }
   }
 
-  Future<List<PartnerModel>> getPartners() async {
+  Future<PartnerCatalogPageModel> getPartnersCatalog({
+    String? name,
+    String? categoryId,
+    int page = 1,
+    int size = 20,
+  }) async {
     try {
-      final response = await _dio.post(
-        ApiConstants.partnersEndpoint,
-        data: {}, // Sending empty body to fetch all partners
-      );
-      
-      if (response.data is List) {
-        return (response.data as List)
-            .map((json) => PartnerModel.fromJson(json))
-            .toList();
-      }
-      
-      if (response.data is Map) {
-         final data = response.data['data'] ?? response.data['partners'];
-         if (data is List) {
-             return data.map((json) => PartnerModel.fromJson(json)).toList();
-         }
-      }
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'size': size,
+      };
+      if (name != null && name.isNotEmpty) queryParams['name'] = name;
+      if (categoryId != null && categoryId.isNotEmpty) queryParams['categoryId'] = categoryId;
 
-      throw Exception('Resposta inesperada do servidor');
+      final response = await _dio.get(
+        ApiConstants.publicInfoEndpoint,
+        queryParameters: queryParams,
+      );
+
+      return PartnerCatalogPageModel.fromJson(response.data);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Erro ao buscar parceiros');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  Future<List<PartnerModel>> getMapPartners({
+    String? name,
+    String? categoryId,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (name != null && name.isNotEmpty) queryParams['name'] = name;
+      if (categoryId != null && categoryId.isNotEmpty) queryParams['categoryId'] = categoryId;
+
+      final response = await _dio.get(
+        ApiConstants.publicInfoMapEndpoint,
+        queryParameters: queryParams,
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map<PartnerModel>((json) => PartnerModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      throw Exception('Resposta inesperada do servidor para mapa');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Erro ao buscar parceiros no mapa');
     } catch (e) {
       throw Exception('Erro inesperado: $e');
     }
