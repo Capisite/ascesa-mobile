@@ -202,6 +202,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       // 0: Home
       HomePage(
         user: _currentUser,
+        token: widget.token,
         controller: _homeController,
         onCategorySelected: (categoryName) {
           _benefitsController.setFilter(categoryName);
@@ -284,6 +285,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
             // Rebuild HomePage with updated user
             _pages[0] = HomePage(
               user: _currentUser,
+              token: widget.token,
               controller: _homeController,
               onCategorySelected: (categoryName) {
                 _benefitsController.setFilter(categoryName);

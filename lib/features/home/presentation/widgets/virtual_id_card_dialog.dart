@@ -1,14 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:dio/dio.dart';
+import 'package:ascesa/core/constants/api_constants.dart';
 
 import 'package:ascesa/features/auth/domain/entities/user.dart';
 
-class VirtualIdCardDialog extends StatelessWidget {
+class VirtualIdCardDialog extends StatefulWidget {
   final User user;
-  const VirtualIdCardDialog({super.key, required this.user});
+  final String? token;
+  const VirtualIdCardDialog({super.key, required this.user, this.token});
+
+  @override
+  State<VirtualIdCardDialog> createState() => _VirtualIdCardDialogState();
+}
+
+class _VirtualIdCardDialogState extends State<VirtualIdCardDialog> {
+  String? _cardToken;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCardToken();
+  }
+
+  Future<void> _fetchCardToken() async {
+    if (widget.token == null) {
+      setState(() {
+        _loading = false;
+        _error = 'Token indisponível';
+      });
+      return;
+    }
+
+    try {
+      final dio = Dio();
+      dio.options.headers['Authorization'] = 'Bearer ${widget.token}';
+      
+      final response = await dio.get('${ApiConstants.baseUrl}/digital-cards/my');
+      
+      if (response.statusCode == 200 && response.data != null) {
+        setState(() {
+          _cardToken = response.data['token'];
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Erro ao carregar';
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Sem conexão';
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = widget.user;
+    final String validationUrl = _cardToken != null 
+        ? 'http://localhost:3000/validar-carteirinha/$_cardToken'
+        : 'http://localhost:3000/validar-carteirinha/${user.id}';
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       elevation: 0,
@@ -165,20 +223,49 @@ class VirtualIdCardDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.black, // Mock QR Code container
-                borderRadius: BorderRadius.circular(12),
-              ),
-              // Placeholder for a real QR code using qr_flutter or similar
-              child: const Icon(
-                Icons.qr_code_2,
-                size: 150,
                 color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
               ),
+              child: _loading
+                  ? const SizedBox(
+                      width: 150,
+                      height: 150,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.greenDark,
+                        ),
+                      ),
+                    )
+                  : _error != null
+                      ? SizedBox(
+                          width: 150,
+                          height: 150,
+                          child: Center(
+                            child: Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        )
+                      : QrImageView(
+                          data: validationUrl,
+                          version: QrVersions.auto,
+                          size: 150.0,
+                        ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'QR Code gerado em tempo real',
-              style: TextStyle(fontSize: 10, color: AppColors.textLight),
+            Text(
+              _loading 
+                  ? 'Gerando token seguro...' 
+                  : _error != null 
+                      ? 'Falha na verificação' 
+                      : 'Válido por 24 horas',
+              style: const TextStyle(fontSize: 10, color: AppColors.textLight),
             ),
           ],
         ),

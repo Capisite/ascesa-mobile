@@ -30,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   final AuthLocalDataSource _localDataSource = AuthLocalDataSource();
   final BiometricService _biometricService = BiometricService();
   User? _cachedUser;
+  String? _cachedToken;
   bool _showFullForm = true;
   bool _obscurePassword = true;
 
@@ -48,16 +49,19 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _checkInitialState() async {
     final enabled = await _localDataSource.isBiometricsEnabled();
     final cachedUser = await _localDataSource.getUser();
+    final cachedToken = await _localDataSource.getToken();
     final credentials = await _localDataSource.getCredentials();
     
     debugPrint('--- [DEBUG CACHE LOGIN] ---');
     debugPrint('Biometrics enabled: $enabled');
     debugPrint('CachedUser: ${cachedUser?.name} (is null? ${cachedUser == null})');
+    debugPrint('CachedToken is null: ${cachedToken == null}');
     debugPrint('Credentials exists: ${credentials != null}');
 
     setState(() {
       _useBiometrics = enabled;
       _cachedUser = cachedUser;
+      _cachedToken = cachedToken;
       if (cachedUser != null && credentials != null) {
         _showFullForm = false;
       }
@@ -146,8 +150,8 @@ class _LoginPageState extends State<LoginPage> {
       final success = await _authController.login(email, password);
 
       if (success && mounted) {
-        // ALWAYS save user so it's available for the virtual ID card
         await _localDataSource.saveUser(_authController.user!);
+        await _localDataSource.saveToken(_authController.accessToken!);
 
         if (_useBiometrics) {
           await _localDataSource.setBiometricsEnabled(true);
@@ -174,12 +178,15 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: _cachedUser != null
+      floatingActionButton: (_cachedUser != null && _cachedToken != null)
           ? FloatingActionButton(
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => VirtualIdCardDialog(user: _cachedUser!),
+                  builder: (context) => VirtualIdCardDialog(
+                    user: _cachedUser!,
+                    token: _cachedToken,
+                  ),
                 );
               },
               backgroundColor: AppColors.greenPrimary,

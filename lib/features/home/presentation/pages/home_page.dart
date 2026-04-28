@@ -11,12 +11,14 @@ import 'package:ascesa/features/home/presentation/controllers/home_controller.da
 
 class HomePage extends StatefulWidget {
   final User user;
+  final String token;
   final HomeController controller;
   final Function(String)? onCategorySelected;
   
   const HomePage({
     super.key,
     required this.user,
+    required this.token,
     required this.controller,
     this.onCategorySelected,
   });
@@ -53,7 +55,7 @@ class _HomePageState extends State<HomePage> {
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => VirtualIdCardDialog(user: widget.user),
+            builder: (context) => VirtualIdCardDialog(user: widget.user, token: widget.token),
           );
         },
         backgroundColor: AppColors.greenDark,
