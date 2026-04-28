@@ -167,17 +167,26 @@ class _VirtualIdCardDialogState extends State<VirtualIdCardDialog> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
+                          image: user.profilePhotoUrl != null && user.profilePhotoUrl!.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(user.profilePhotoUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: const ClipOval(
-                          child: Center(
-                            child: Icon(
-                              Icons.person,
-                              color: AppColors.greenLight,
-                              size: 30,
-                            ),
-                          ),
-                        ),
+                        child: user.profilePhotoUrl == null || user.profilePhotoUrl!.isEmpty
+                            ? const ClipOval(
+                                child: Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    color: AppColors.greenLight,
+                                    size: 30,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
+
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
