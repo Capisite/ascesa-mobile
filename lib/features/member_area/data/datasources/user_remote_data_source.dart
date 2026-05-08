@@ -48,6 +48,23 @@ class UserRemoteDataSource {
     }
   }
 
+  Future<Map<String, dynamic>> updatePassword(String currentPassword, String newPassword) async {
+    try {
+      final response = await _dio.patch(
+        ApiConstants.updatePasswordEndpoint,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Erro ao atualizar senha');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> updateProfilePhoto(String filePath) async {
     try {
       final formData = FormData.fromMap({

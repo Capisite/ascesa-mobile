@@ -21,6 +21,7 @@ class User {
   final String? maritalStatus;
   final String? gender;
   final String? profilePhotoUrl;
+  final String? authProvider;
 
   User({
     required this.id,
@@ -44,6 +45,7 @@ class User {
     this.maritalStatus,
     this.gender,
     this.profilePhotoUrl,
+    this.authProvider,
   });
 
   User copyWith({
@@ -68,6 +70,7 @@ class User {
     Object? maritalStatus = _sentinel,
     Object? gender = _sentinel,
     Object? profilePhotoUrl = _sentinel,
+    Object? authProvider = _sentinel,
   }) {
     return User(
       id: id ?? this.id,
@@ -91,6 +94,7 @@ class User {
       maritalStatus: maritalStatus == _sentinel ? this.maritalStatus : maritalStatus as String?,
       gender: gender == _sentinel ? this.gender : gender as String?,
       profilePhotoUrl: profilePhotoUrl == _sentinel ? this.profilePhotoUrl : profilePhotoUrl as String?,
+      authProvider: authProvider == _sentinel ? this.authProvider : authProvider as String?,
     );
   }
 
@@ -119,6 +123,7 @@ class User {
       maritalStatus: json['maritalStatus'] ?? json['marital_status'],
       gender: json['gender'],
       profilePhotoUrl: json['profilePhotoUrl'] ?? json['profile_photo_url'],
+      authProvider: json['authProvider'] ?? json['auth_provider'],
     );
   }
 
@@ -145,6 +150,7 @@ class User {
       'maritalStatus': maritalStatus,
       'gender': gender,
       'profilePhotoUrl': profilePhotoUrl,
+      'authProvider': authProvider,
     };
   }
 }

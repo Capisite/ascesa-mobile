@@ -113,6 +113,23 @@ class UserProfileController extends ChangeNotifier {
     }
   }
 
+  Future<void> updatePassword({required String currentPassword, required String newPassword}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+
+    try {
+      await updateUserUseCase.updatePassword(currentPassword, newPassword);
+      _successMessage = 'Senha atualizada com sucesso!';
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void clearMessages() {
     _errorMessage = null;
     _successMessage = null;

@@ -4,6 +4,7 @@ class ApiConstants {
   static const String baseUrl = 'https://api.ascesa.com.br';
   static const String loginEndpoint = '/auth/login';
   static const String updateUserEndpoint = '/users/me';
+  static const String updatePasswordEndpoint = '/users/me/password';
   static const String registerEndpoint = '/auth/register';
   static const String categoriesEndpoint = '/allya/categories';
   static const String publicInfoEndpoint = '/allya/public-info';

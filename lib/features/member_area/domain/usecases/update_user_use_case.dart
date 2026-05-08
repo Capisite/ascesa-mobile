@@ -39,4 +39,8 @@ class UpdateUserUseCase {
       profilePhotoUrl: userData['profilePhotoUrl'],
     );
   }
+
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    await dataSource.updatePassword(currentPassword, newPassword);
+  }
 }

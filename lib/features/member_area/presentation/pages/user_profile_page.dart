@@ -15,6 +15,15 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
+  final _passwordFormKey = GlobalKey<FormState>();
+
+  // Segurança
+  late TextEditingController _currentPasswordController;
+  late TextEditingController _newPasswordController;
+  late TextEditingController _confirmNewPasswordController;
+  bool _showCurrentPassword = false;
+  bool _showNewPassword = false;
+  bool _showConfirmNewPassword = false;
 
   // Informações pessoais
   late TextEditingController _nameController;
@@ -60,6 +69,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
     _initControllers(widget.controller.user);
     // Ouve o controller: quando fetchProfile terminar, atualiza os campos
     widget.controller.addListener(_onUserUpdated);
+
+    _currentPasswordController = TextEditingController();
+    _newPasswordController = TextEditingController();
+    _confirmNewPasswordController = TextEditingController();
   }
 
   void _initControllers(user) {
@@ -121,6 +134,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
     _addressComplementController.dispose();
     _districtController.dispose();
     _cityController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmNewPasswordController.dispose();
     super.dispose();
   }
 
@@ -151,6 +167,36 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           );
         } else if (widget.controller.successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.controller.successMessage!),
+              backgroundColor: AppColors.greenPrimary,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _handlePasswordSave() async {
+    if (_passwordFormKey.currentState!.validate()) {
+      await widget.controller.updatePassword(
+        currentPassword: _currentPasswordController.text,
+        newPassword: _newPasswordController.text,
+      );
+
+      if (mounted) {
+        if (widget.controller.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.controller.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (widget.controller.successMessage != null) {
+          _currentPasswordController.clear();
+          _newPasswordController.clear();
+          _confirmNewPasswordController.clear();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(widget.controller.successMessage!),
@@ -471,6 +517,93 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         ),
                       ),
                       const SizedBox(height: 32),
+
+                      // ── Segurança ──
+                      _buildSectionTitle('Segurança'),
+                      if (widget.controller.user.authProvider != 'LOCAL' && widget.controller.user.authProvider != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            border: Border.all(color: Colors.amber.shade200),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Esta conta usa login externo. A alteração de senha local não está disponível.',
+                            style: TextStyle(color: Colors.amber.shade800),
+                          ),
+                        )
+                      else
+                        Form(
+                          key: _passwordFormKey,
+                          child: Column(
+                            children: [
+                              _buildPasswordField(
+                                label: 'Senha atual',
+                                controller: _currentPasswordController,
+                                obscureText: !_showCurrentPassword,
+                                onToggleVisibility: () => setState(() => _showCurrentPassword = !_showCurrentPassword),
+                                validator: (v) => v == null || v.isEmpty ? 'Campo obrigatório' : null,
+                              ),
+                              _buildPasswordField(
+                                label: 'Nova senha',
+                                controller: _newPasswordController,
+                                obscureText: !_showNewPassword,
+                                onToggleVisibility: () => setState(() => _showNewPassword = !_showNewPassword),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) return 'Campo obrigatório';
+                                  if (v.length < 8) return 'Mínimo de 8 caracteres';
+                                  if (v == _currentPasswordController.text) return 'A nova senha deve ser diferente da atual';
+                                  return null;
+                                },
+                              ),
+                              _buildPasswordField(
+                                label: 'Confirmar nova senha',
+                                controller: _confirmNewPasswordController,
+                                obscureText: !_showConfirmNewPassword,
+                                onToggleVisibility: () => setState(() => _showConfirmNewPassword = !_showConfirmNewPassword),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) return 'Campo obrigatório';
+                                  if (v != _newPasswordController.text) return 'As senhas não conferem';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: isLoading ? null : _handlePasswordSave,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.greenPrimary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    elevation: 0,
+                                  ).copyWith(
+                                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                                      if (states.contains(WidgetState.disabled)) return AppColors.textLight;
+                                      return AppColors.greenPrimary;
+                                    }),
+                                  ),
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                        )
+                                      : const Text(
+                                          'Atualizar Senha',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),
@@ -584,8 +717,49 @@ class _UserProfilePageState extends State<UserProfilePage> {
             const Icon(Icons.lock_outline, color: AppColors.textLight, size: 18),
           ],
         ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required String label,
+    required TextEditingController controller,
+    required bool obscureText,
+    required VoidCallback onToggleVisibility,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        validator: validator,
+        style: const TextStyle(fontSize: 15, color: AppColors.greenDark),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: AppColors.textMuted),
+          prefixIcon: const Icon(Icons.lock_outline, color: AppColors.greenPrimary, size: 22),
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscureText ? Icons.visibility_off : Icons.visibility,
+              color: AppColors.textMuted,
+            ),
+            onPressed: onToggleVisibility,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.greenPrimary, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
       ),
     );
   }
 }
-
