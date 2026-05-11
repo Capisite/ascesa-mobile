@@ -1,4 +1,4 @@
-package com.ascesa.app
+package com.ascesav2.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

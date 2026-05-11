@@ -717,6 +717,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             const Icon(Icons.lock_outline, color: AppColors.textLight, size: 18),
           ],
         ),
+      ),
     );
   }
 
