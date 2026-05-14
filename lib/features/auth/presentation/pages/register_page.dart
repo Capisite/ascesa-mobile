@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:ascesa/core/theme/app_colors.dart';
 import 'package:ascesa/features/auth/presentation/widgets/custom_text_field.dart';
@@ -11,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ascesa/features/auth/presentation/widgets/register_steps/step1_personal_data.dart';
 import 'package:ascesa/features/auth/presentation/widgets/register_steps/step2_contact_access.dart';
 import 'package:ascesa/features/auth/presentation/widgets/register_steps/step3_address_filiation.dart';
+
 import 'package:ascesa/features/auth/presentation/widgets/register_steps/step4_dependents.dart';
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -37,7 +39,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _companyRelationship;
   final _companyNameController = TextEditingController();
   final _affiliatedCompanyNameController = TextEditingController();
-  File? _profilePhotoFile;
+  Uint8List? _profilePhotoBytes;
+  String? _profilePhotoName;
   final ImagePicker _imagePicker = ImagePicker();
 
   // Controllers - Step 2
@@ -271,8 +274,8 @@ class _RegisterPageState extends State<RegisterPage> {
         imageQuality: 80,
       );
       if (image != null) {
-        final file = File(image.path);
-        final int sizeInBytes = file.lengthSync();
+        final bytes = await image.readAsBytes();
+        final int sizeInBytes = bytes.length;
         if (sizeInBytes > 1 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -282,7 +285,8 @@ class _RegisterPageState extends State<RegisterPage> {
           return;
         }
         setState(() {
-          _profilePhotoFile = file;
+          _profilePhotoBytes = bytes;
+          _profilePhotoName = image.name;
         });
       }
     } catch (e) {
@@ -383,10 +387,13 @@ class _RegisterPageState extends State<RegisterPage> {
         ]);
       }
 
-      if (_profilePhotoFile != null) {
+      if (_profilePhotoBytes != null && _profilePhotoName != null) {
         formData.files.add(MapEntry(
           'profilePhoto',
-          await MultipartFile.fromFile(_profilePhotoFile!.path),
+          MultipartFile.fromBytes(
+            _profilePhotoBytes!,
+            filename: _profilePhotoName,
+          ),
         ));
       }
 
@@ -492,7 +499,7 @@ class _RegisterPageState extends State<RegisterPage> {
       onMaritalStatusChanged: (val) => setState(() => _selectedMaritalStatus = val),
       companyRelationship: _companyRelationship,
       onCompanyRelationshipChanged: (val) => setState(() => _companyRelationship = val),
-      profilePhotoFile: _profilePhotoFile,
+      profilePhotoName: _profilePhotoName,
       onPickProfilePhoto: _showPhotoPickerOptions,
       cpfFormatter: _cpfFormatter,
       rgFormatter: _rgFormatter,

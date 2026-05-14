@@ -23,7 +23,7 @@ class Step1PersonalData extends StatelessWidget {
   final String? companyRelationship;
   final ValueChanged<String?> onCompanyRelationshipChanged;
 
-  final File? profilePhotoFile;
+  final String? profilePhotoName;
   final VoidCallback onPickProfilePhoto;
 
   final MaskTextInputFormatter cpfFormatter;
@@ -47,7 +47,7 @@ class Step1PersonalData extends StatelessWidget {
     required this.onMaritalStatusChanged,
     required this.companyRelationship,
     required this.onCompanyRelationshipChanged,
-    required this.profilePhotoFile,
+    required this.profilePhotoName,
     required this.onPickProfilePhoto,
     required this.cpfFormatter,
     required this.rgFormatter,
@@ -219,8 +219,8 @@ class Step1PersonalData extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      profilePhotoFile != null ? profilePhotoFile!.path.split('/').last : 'Selecione uma imagem (JPG, PNG)',
-                      style: TextStyle(color: profilePhotoFile != null ? AppColors.greenDark : AppColors.textLight, fontSize: 14),
+                      profilePhotoName ?? 'Selecione uma imagem (JPG, PNG)',
+                      style: TextStyle(color: profilePhotoName != null ? AppColors.greenDark : AppColors.textLight, fontSize: 14),
                     ),
                   ),
                 ],
