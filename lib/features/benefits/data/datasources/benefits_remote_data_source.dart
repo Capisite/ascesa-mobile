@@ -46,7 +46,12 @@ class BenefitsRemoteDataSource {
 
       return PartnerCatalogPageModel.fromJson(response.data);
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Erro ao buscar parceiros');
+      throw Exception(
+        _translateErrorMessage(
+          e.response?.data['message'],
+          fallback: 'Erro ao buscar parceiros',
+        ),
+      );
     } catch (e) {
       throw Exception('Erro inesperado: $e');
     }
@@ -74,7 +79,12 @@ class BenefitsRemoteDataSource {
 
       throw Exception('Resposta inesperada do servidor para mapa');
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Erro ao buscar parceiros no mapa');
+      throw Exception(
+        _translateErrorMessage(
+          e.response?.data['message'],
+          fallback: 'Erro ao buscar parceiros no mapa',
+        ),
+      );
     } catch (e) {
       throw Exception('Erro inesperado: $e');
     }
@@ -94,10 +104,51 @@ class BenefitsRemoteDataSource {
       return response.data;
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data['message'] ?? 'Não foi possível abrir o convênio agora.',
+        _translateErrorMessage(
+          e.response?.data['message'],
+          fallback: 'Não foi possível abrir o convênio agora.',
+        ),
       );
     } catch (e) {
       throw Exception('Não foi possível abrir o convênio agora.');
     }
+  }
+
+  String _translateErrorMessage(dynamic message, {required String fallback}) {
+    if (message == null || message is! String || message.isEmpty) {
+      return fallback;
+    }
+
+    switch (message) {
+      case 'You need to have a registered CPF to access the agreements.':
+        return 'Você precisa ter um CPF cadastrado para acessar os convênios.';
+      case 'Failed to fetch partner details from Allya':
+        return 'Falha ao buscar detalhes do parceiro da Allya.';
+      case 'Failed to create Allya session':
+        return 'Falha ao iniciar sessão nos convênios.';
+      case 'Failed to fetch categories from Allya':
+        return 'Falha ao buscar categorias da Allya.';
+      case 'Failed to fetch public partners from Allya':
+        return 'Falha ao buscar parceiros públicos da Allya.';
+      case 'Failed to fetch partners from Allya':
+        return 'Falha ao buscar parceiros da Allya.';
+      case 'Invalid CPF provided to Allya.':
+        return 'CPF inválido fornecido à Allya.';
+    }
+
+    if (message.startsWith('Allya API Error: ')) {
+      final detail = message.replaceFirst('Allya API Error: ', '');
+      if (detail.startsWith('Invalid value for field "')) {
+        final fieldMatch = RegExp(r'Invalid value for field "([^"]+)": (.+)').firstMatch(detail);
+        if (fieldMatch != null) {
+          final field = fieldMatch.group(1);
+          final errText = fieldMatch.group(2);
+          return 'Erro da API Allya: Valor inválido para o campo "$field": $errText.';
+        }
+      }
+      return 'Erro da API Allya: $detail';
+    }
+
+    return message;
   }
 }
