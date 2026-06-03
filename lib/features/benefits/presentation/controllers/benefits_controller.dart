@@ -20,7 +20,7 @@ class BenefitsController extends ChangeNotifier {
   List<Partner> _catalogPartners = [];
   List<Partner> _mapPartners = [];
 
-  String? _selectedCategoryName;
+  String? _selectedCategoryId;
   String _searchQuery = '';
   bool _hasPortalSessionHint = false;
 
@@ -41,7 +41,7 @@ class BenefitsController extends ChangeNotifier {
   List<Partner> get partners => _catalogPartners;
   List<Partner> get mapPartners => _mapPartners;
 
-  String? get selectedCategoryName => _selectedCategoryName;
+  String? get selectedCategoryId => _selectedCategoryId;
   String get searchQuery => _searchQuery;
 
   Future<void> fetchPartners({bool reset = false}) async {
@@ -60,7 +60,7 @@ class BenefitsController extends ChangeNotifier {
     try {
       final pageData = await getPartnersUseCase.execute(
         name: _searchQuery,
-        categoryId: _selectedCategoryName, // Assuming the API accepts categoryName as categoryId or we filter it differently. Wait, API might expect UUID for categoryId. But currently mobile UI sends categoryName. I'll just pass categoryName as categoryId to the API, and if the API expects it, it will work. If the API expects name, we'll see. Wait, we should just pass it.
+        categoryId: _selectedCategoryId,
         page: _currentPage,
         size: 20,
       );
@@ -88,7 +88,7 @@ class BenefitsController extends ChangeNotifier {
     try {
       _mapPartners = await getMapPartnersUseCase.execute(
         name: _searchQuery,
-        categoryId: _selectedCategoryName,
+        categoryId: _selectedCategoryId,
       );
       notifyListeners();
 
@@ -124,9 +124,9 @@ class BenefitsController extends ChangeNotifier {
       }
   }
 
-  void setFilter(String? categoryName) {
-    if (_selectedCategoryName == categoryName) return;
-    _selectedCategoryName = categoryName;
+  void setFilter(String? categoryId) {
+    if (_selectedCategoryId == categoryId) return;
+    _selectedCategoryId = categoryId;
     fetchPartners(reset: true);
     fetchMapPartners();
   }
@@ -207,7 +207,7 @@ class BenefitsController extends ChangeNotifier {
   void reset() {
     _catalogPartners = [];
     _mapPartners = [];
-    _selectedCategoryName = null;
+    _selectedCategoryId = null;
     _searchQuery = '';
     _errorMessage = null;
     _hasPortalSessionHint = false;

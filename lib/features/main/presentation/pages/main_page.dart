@@ -205,8 +205,8 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
         user: _currentUser,
         token: widget.token,
         controller: _homeController,
-        onCategorySelected: (categoryName) {
-          _benefitsController.setFilter(categoryName);
+        onCategorySelected: (categoryId) {
+          _benefitsController.setFilter(categoryId);
           _onItemTapped(1); // Switch to Convênios tab
         },
       ),
@@ -288,8 +288,8 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               user: _currentUser,
               token: widget.token,
               controller: _homeController,
-              onCategorySelected: (categoryName) {
-                _benefitsController.setFilter(categoryName);
+              onCategorySelected: (categoryId) {
+                _benefitsController.setFilter(categoryId);
                 _onItemTapped(1);
               },
             );

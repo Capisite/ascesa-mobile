@@ -65,9 +65,9 @@ class ConveniosPage extends StatelessWidget {
                         builder: (context, _) {
                           return ConveniosFilterList(
                             categories: homeController.categories,
-                            selectedCategoryName: benefitsController.selectedCategoryName,
-                            onCategorySelected: (catName) {
-                               benefitsController.setFilter(catName);
+                            selectedCategoryId: benefitsController.selectedCategoryId,
+                            onCategorySelected: (catId) {
+                               benefitsController.setFilter(catId);
                             },
                             onClearFilter: () {
                                benefitsController.setFilter(null);
@@ -81,7 +81,7 @@ class ConveniosPage extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          benefitsController.selectedCategoryName != null 
+                          benefitsController.selectedCategoryId != null 
                               ? 'Parceiros Encontrados'
                               : 'Destaques para você',
                           style: const TextStyle(

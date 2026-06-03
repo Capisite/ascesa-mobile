@@ -117,7 +117,7 @@ class _QuickAccessSectionState extends State<QuickAccessSection> {
                 return InkWell(
                   onTap: () {
                     if (widget.onCategorySelected != null) {
-                      widget.onCategorySelected!(cat.name);
+                      widget.onCategorySelected!(cat.id);
                     }
                   },
                   borderRadius: BorderRadius.circular(16),

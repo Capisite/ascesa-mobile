@@ -5,14 +5,14 @@ import 'package:ascesa/features/home/domain/entities/category.dart';
 
 class ConveniosFilterList extends StatelessWidget {
   final List<Category> categories;
-  final String? selectedCategoryName;
+  final String? selectedCategoryId;
   final Function(String) onCategorySelected;
   final VoidCallback onClearFilter;
 
   const ConveniosFilterList({
     super.key,
     required this.categories,
-    required this.selectedCategoryName,
+    required this.selectedCategoryId,
     required this.onCategorySelected,
     required this.onClearFilter,
   });
@@ -28,7 +28,7 @@ class ConveniosFilterList extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           if (index == 0) {
-            final isSelected = selectedCategoryName == null;
+            final isSelected = selectedCategoryId == null;
             return GestureDetector(
               onTap: onClearFilter,
               child: _buildPillFilter('Todas', isSelected),
@@ -36,11 +36,11 @@ class ConveniosFilterList extends StatelessWidget {
           }
           
           final category = categories[index - 1];
-          final isSelected = selectedCategoryName == category.name;
+          final isSelected = selectedCategoryId == category.id;
           
           return GestureDetector(
             onTap: () {
-              onCategorySelected(category.name);
+              onCategorySelected(category.id);
             },
             child: _buildPillFilter(category.name, isSelected),
           );
